@@ -46,6 +46,27 @@ cd $env:USERPROFILE\GitHub\personal\dotfiles
 
 The bootstrap script installs everything (including `gh`), then runs the linker. Takes 5-10 minutes.
 
+### 1b. (Alternative) Restricted Linux box without sudo
+
+For Ubuntu/Linux boxes where you don't have sudo:
+
+```bash
+git clone https://github.com/gregorybeal/dotfiles.git ~/code/personal/dotfiles
+cd ~/code/personal/dotfiles
+./bootstrap-nosudo.sh
+```
+
+The no-sudo script:
+- Installs `fzf`, `bat`, `fd`, `rg`, `jq` as **userspace binaries** in `~/.local/bin`
+- Sets up Oh My Zsh + plugins **if zsh is already installed**
+- Sets up TPM **if tmux is already installed**
+- Runs `install.sh` to symlink all configs
+- Warns about (but doesn't fail on) missing zsh/tmux
+
+You'll still need to ask the admin for `zsh` and `tmux` themselves if they aren't preinstalled. If neither is available, you can fall back to bash (your `.bashrc` still loads with aliases, prompt, etc.) and use `screen` instead of tmux for session persistence — the core "don't lose work when disconnected" feature works in screen with no setup.
+
+To make zsh your shell without sudo (if it's installed but `chsh` requires admin), add `exec zsh` to the end of your `~/.bash_profile`.
+
 ### 2. Authenticate gh
 
 After bootstrap finishes, restart your shell and run:

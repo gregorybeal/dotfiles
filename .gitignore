@@ -1,0 +1,27 @@
+# Secrets and machine-local overrides
+.secrets
+*.local
+*.local.*
+config.local
+config.windows.local
+
+# reg-tool generated/sensitive
+reg-tool/registers.csv
+reg-tool/config
+
+# SSH private keys (must NEVER be committed)
+id_rsa
+id_ed25519
+id_ecdsa
+*.pem
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor backups
+*~
+*.swp
+*.swo
+.vscode/

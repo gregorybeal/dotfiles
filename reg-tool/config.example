@@ -1,0 +1,18 @@
+# reg-tool config
+# Copy this to ~/.config/reg-tool/config and edit for your environment.
+# Sourced by both reg.sh (bash/zsh) and reg.ps1 (PowerShell).
+
+# --- Jump box and credentials ---
+REG_JUMPBOX="jumpbox"
+REG_USER="posuser"
+
+# --- SQLite source for register inventory ---
+# Local file path:
+REG_SQLITE_LOCAL="$HOME/pos-dashboard/registers.db"
+
+# Remote (fetched via scp from jump box):
+REG_SQLITE_REMOTE_HOST="jumpbox"
+REG_SQLITE_REMOTE_PATH="/opt/dashboard/registers.db"
+
+# --- Default log path on registers ---
+REG_LOG_PATH="/var/log/pos/application.log"

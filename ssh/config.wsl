@@ -1,0 +1,28 @@
+# ~/.ssh/config — WSL
+# GitHub auth is handled by gh CLI over HTTPS — no GitHub SSH needed here.
+# This config covers your jump box + registers.
+
+Host *
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h-%p
+    ControlPersist 600
+    AddKeysToAgent yes
+
+# --- Jump box ---
+Host jumpbox
+    HostName jump.example.com
+    User greg
+    # IdentityFile ~/.ssh/id_ed25519
+
+# --- Registers (edit IP patterns to match your subnets) ---
+Host 10.50.*
+    User posuser
+    ProxyJump jumpbox
+
+Host 10.60.*
+    User posuser
+    ProxyJump jumpbox
+
+Include ~/.ssh/config.local

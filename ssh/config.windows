@@ -1,0 +1,27 @@
+# ~/.ssh/config — Windows
+# GitHub auth is handled by gh CLI over HTTPS — no GitHub SSH needed here.
+# IMPORTANT: NO ControlMaster on Windows — Windows OpenSSH throws
+# "getsockname failed: Not a socket" with it enabled.
+
+Host *
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# --- Jump box ---
+Host jumpbox
+    HostName jump.example.com
+    User greg
+    # IdentityFile ~/.ssh/id_ed25519
+
+# --- Registers (edit IP patterns to match your subnets) ---
+Host 10.50.*
+    User posuser
+    ProxyJump jumpbox
+
+Host 10.60.*
+    User posuser
+    ProxyJump jumpbox
+
+# Per-machine overrides (gitignored).
+# NOTE: 'Include' uses paths relative to the config file's directory on Windows.
+Include config.local

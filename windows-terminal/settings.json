@@ -1,86 +1,347 @@
 {
     "$help": "https://aka.ms/terminal-documentation",
     "$schema": "https://aka.ms/terminal-profiles-schema",
-
-    "defaultProfile": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
-    "copyOnSelect": true,
-    "copyFormatting": "none",
-    "useAcrylicInTabRow": true,
-    "showTabsInTitlebar": true,
-    "alwaysShowTabs": true,
-
-    "profiles": {
-        "defaults": {
-            "font": {
-                "face": "FiraCode Nerd Font",
-                "size": 11,
-                "weight": "normal"
+    "actions": 
+    [
+        {
+            "command": 
+            {
+                "action": "copy",
+                "singleLine": false
             },
-            "cursorShape": "bar",
-            "antialiasingMode": "cleartype",
-            "scrollbarState": "hidden",
-            "useAcrylic": false,
-            "padding": "8",
-            "snapOnInput": true,
-            "historySize": 50000,
-            "colorScheme": "Catppuccin Mocha"
+            "id": "User.copy.644BA8F2"
         },
-        "list": [
+        {
+            "command": "paste",
+            "id": "User.paste"
+        },
+        {
+            "command": "find",
+            "id": "User.find"
+        },
+        {
+            "command": 
             {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.A6751878"
+        }
+    ],
+    "copyFormatting": "none",
+    "copyOnSelect": false,
+    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+    "keybindings": 
+    [
+        {
+            "id": "User.copy.644BA8F2",
+            "keys": "ctrl+c"
+        },
+        {
+            "id": "User.find",
+            "keys": "ctrl+shift+f"
+        },
+        {
+            "id": "User.paste",
+            "keys": "ctrl+v"
+        },
+        {
+            "id": "User.splitPane.A6751878",
+            "keys": "alt+shift+d"
+        }
+    ],
+    "newTabMenu": 
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+    "profiles": 
+    {
+        "defaults": {},
+        "list": 
+        [
+            {
+                "adjustIndistinguishableColors": "always",
+                "antialiasingMode": "cleartype",
+                "colorScheme": "Catppuccin Macchiato",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                "cursorShape": "vintage",
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
-                "name": "PowerShell",
-                "commandline": "pwsh.exe -NoLogo",
-                "icon": "ms-appx:///ProfileIcons/{61c54bbd-c2c6-5271-96e7-009a87ff44bf}.png",
                 "hidden": false,
-                "startingDirectory": "%USERPROFILE%"
+                "icon": "ms-appx:///ProfileIcons/{61c54bbd-c2c6-5271-96e7-009a87ff44bf}.png",
+                "name": "Windows PowerShell",
+                "opacity": 100,
+                "tabTitle": "Local PS",
+                "useAcrylic": false
             },
             {
-                "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
-                "name": "Ubuntu (WSL)",
-                "source": "Windows.Terminal.Wsl",
-                "startingDirectory": "//wsl$/Ubuntu/home/%USERNAME%",
-                "hidden": false
-            },
-            {
-                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
-                "name": "Command Prompt",
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
-                "hidden": true
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font"
+                },
+                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+                "hidden": false,
+                "name": "Command Prompt"
+            },
+            {
+                "guid": "{b453ae62-4e3d-5e58-b989-0a998ec441b8}",
+                "hidden": true,
+                "name": "Azure Cloud Shell",
+                "source": "Windows.Terminal.Azure"
+            },
+            {
+                "adjustIndistinguishableColors": "always",
+                "altGrAliasing": true,
+                "antialiasingMode": "cleartype",
+                "closeOnExit": "automatic",
+                "colorScheme": "Solarized Dark",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe \"ssh gbeal@10.242.143.250\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{6d85652e-507a-4478-931c-e7c03506765c}",
+                "hidden": false,
+                "historySize": 9001,
+                "icon": "\ud83d\udcbc",
+                "name": "LasSSSgate01",
+                "opacity": 100,
+                "padding": "0",
+                "scrollbarState": "hidden",
+                "snapOnInput": true,
+                "startingDirectory": "c:",
+                "suppressApplicationTitle": true,
+                "tabTitle": "LasSSSgate01",
+                "useAcrylic": true
+            },
+            {
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font"
+                },
+                "guid": "{d8e96812-b789-5068-a5ae-10b2fb53e95f}",
+                "hidden": false,
+                "icon": "\uf552",
+                "name": "WSL - Ubuntu 24.04.1 LTS",
+                "source": "CanonicalGroupLimited.Ubuntu24.04LTS_79rhkp1fndgsc",
+                "tabTitle": "WSL",
+                "useAcrylic": true
+            },
+            {
+                "guid": "{2f92f79d-f78f-5bd7-9f07-ccf0e16e3ce3}",
+                "hidden": true,
+                "name": "Developer Command Prompt for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{a30a37a5-b30e-50c9-9ee6-06aef81be5d2}",
+                "hidden": true,
+                "name": "Developer PowerShell for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{ae015c60-9815-5a00-8140-e2c12639e670}",
+                "hidden": true,
+                "name": "Developer Command Prompt for VS 2022 (2)",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{9d5fe9d4-3b48-53a8-af47-823db316b1c9}",
+                "hidden": true,
+                "name": "Developer PowerShell for VS 2022 (2)",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "adjustIndistinguishableColors": "always",
+                "altGrAliasing": true,
+                "antialiasingMode": "cleartype",
+                "closeOnExit": "automatic",
+                "colorScheme": "Solarized Dark",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe \"ssh gbeal@LasStrLinux01\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{ae06535d-b795-470c-a630-7e2c14451647}",
+                "hidden": false,
+                "historySize": 9001,
+                "icon": "\ud83d\udc27",
+                "name": "LasStrLinux01",
+                "opacity": 100,
+                "padding": "0",
+                "scrollbarState": "hidden",
+                "snapOnInput": true,
+                "startingDirectory": "c:",
+                "suppressApplicationTitle": true,
+                "tabTitle": "LasStrLinux01",
+                "useAcrylic": false
+            },
+            {
+                "adjustIndistinguishableColors": "always",
+                "altGrAliasing": true,
+                "antialiasingMode": "cleartype",
+                "closeOnExit": "automatic",
+                "colorScheme": "Vintage",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe \"ssh root@107.174.184.174\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{41a0ff1c-1202-4c1c-ba43-765c6d622a04}",
+                "hidden": false,
+                "historySize": 9001,
+                "icon": "\u2601\ufe0f",
+                "name": "Outpost",
+                "opacity": 100,
+                "padding": "0",
+                "scrollbarState": "hidden",
+                "snapOnInput": true,
+                "startingDirectory": "c:",
+                "suppressApplicationTitle": true,
+                "tabTitle": "Outpost",
+                "useAcrylic": true
+            },
+            {
+                "adjustIndistinguishableColors": "always",
+                "altGrAliasing": true,
+                "antialiasingMode": "cleartype",
+                "closeOnExit": "automatic",
+                "colorScheme": "One Half Light",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe \"ssh gbeal@100.124.1.117\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{2d811548-7074-453d-aec6-ceb25bdc6819}",
+                "hidden": false,
+                "historySize": 9001,
+                "icon": "\ud83c\udf4e",
+                "name": "MBP-16_TS",
+                "opacity": 100,
+                "padding": "0",
+                "scrollbarState": "hidden",
+                "snapOnInput": true,
+                "startingDirectory": "c:",
+                "suppressApplicationTitle": true,
+                "tabTitle": "MBP-16_TS",
+                "useAcrylic": true
+            },
+            {
+                "adjustIndistinguishableColors": "always",
+                "altGrAliasing": true,
+                "antialiasingMode": "cleartype",
+                "closeOnExit": "automatic",
+                "colorScheme": "Catppuccin Macchiato",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe \"ssh greg@100.114.72.45\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{9573a7ca-27cd-45db-9c3d-af594db1a068}",
+                "hidden": false,
+                "historySize": 9001,
+                "icon": "\ud83c\udfa9",
+                "name": "fedora-vm",
+                "opacity": 75,
+                "padding": "0",
+                "scrollbarState": "hidden",
+                "snapOnInput": true,
+                "startingDirectory": "c:",
+                "suppressApplicationTitle": true,
+                "tabTitle": "fedora-vm",
+                "useAcrylic": true
+            },
+            {
+                "antialiasingMode": "cleartype",
+                "colorScheme": "One Half Dark",
+                "cursorShape": "vintage",
+                "font": 
+                {
+                    "face": "JetBrainsMono Nerd Font",
+                    "size": 14
+                },
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "hidden": false,
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore",
+                "useAcrylic": false
             }
         ]
     },
-
-    "schemes": [
+    "schemes": 
+    [
         {
-            "name": "Catppuccin Mocha",
-            "background": "#1E1E2E",
-            "foreground": "#CDD6F4",
-            "cursorColor": "#F5E0DC",
-            "selectionBackground": "#585B70",
-            "black":        "#45475A",
-            "red":          "#F38BA8",
-            "green":        "#A6E3A1",
-            "yellow":       "#F9E2AF",
-            "blue":         "#89B4FA",
-            "purple":       "#F5C2E7",
-            "cyan":         "#94E2D5",
-            "white":        "#BAC2DE",
-            "brightBlack":  "#585B70",
-            "brightRed":    "#F38BA8",
-            "brightGreen":  "#A6E3A1",
-            "brightYellow": "#F9E2AF",
-            "brightBlue":   "#89B4FA",
-            "brightPurple": "#F5C2E7",
-            "brightCyan":   "#94E2D5",
-            "brightWhite":  "#A6ADC8"
+            "background": "#24273A",
+            "black": "#494D64",
+            "blue": "#8AADF4",
+            "brightBlack": "#5B6078",
+            "brightBlue": "#8AADF4",
+            "brightCyan": "#8BD5CA",
+            "brightGreen": "#A6DA95",
+            "brightPurple": "#F5BDE6",
+            "brightRed": "#ED8796",
+            "brightWhite": "#A5ADCB",
+            "brightYellow": "#EED49F",
+            "cursorColor": "#F4DBD6",
+            "cyan": "#8BD5CA",
+            "foreground": "#CAD3F5",
+            "green": "#A6DA95",
+            "name": "Catppuccin Macchiato",
+            "purple": "#F5BDE6",
+            "red": "#ED8796",
+            "selectionBackground": "#5B6078",
+            "white": "#B8C0E0",
+            "yellow": "#EED49F"
         }
     ],
-
-    "actions": [
-        { "command": { "action": "splitPane", "split": "vertical",   "splitMode": "duplicate" }, "keys": "alt+shift+plus" },
-        { "command": { "action": "splitPane", "split": "horizontal", "splitMode": "duplicate" }, "keys": "alt+shift+minus" },
-        { "command": "find", "keys": "ctrl+shift+f" },
-        { "command": { "action": "newTab" }, "keys": "ctrl+t" },
-        { "command": "closeTab", "keys": "ctrl+w" }
-    ]
+    "themes": 
+    [
+        {
+            "name": "Catppuccin Macchiato",
+            "tab": 
+            {
+                "background": "#24273AFF",
+                "iconStyle": "default",
+                "showCloseButton": "always",
+                "unfocusedBackground": null
+            },
+            "tabRow": 
+            {
+                "background": "#1E2030FF",
+                "unfocusedBackground": "#181926FF"
+            },
+            "window": 
+            {
+                "applicationTheme": "dark",
+                "experimental.rainbowFrame": false,
+                "frame": null,
+                "unfocusedFrame": null,
+                "useMica": false
+            }
+        }
+    ],
+    "windowingBehavior": "useAnyExisting"
 }

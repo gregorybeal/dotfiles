@@ -1,27 +1,48 @@
-# ~/.ssh/config — Windows
-# GitHub auth is handled by gh CLI over HTTPS — no GitHub SSH needed here.
-# IMPORTANT: NO ControlMaster on Windows — Windows OpenSSH throws
-# "getsockname failed: Not a socket" with it enabled.
-
+# Defaults for everything
 Host *
     ServerAliveInterval 60
     ServerAliveCountMax 3
 
-# --- Jump box ---
+# Jump box
 Host jumpbox
-    HostName jump.example.com
-    User greg
-    # IdentityFile ~/.ssh/id_ed25519
+    HostName lassssgate01.traderjoes.com
+    User gbeal
 
-# --- Registers (edit IP patterns to match your subnets) ---
-Host 10.50.*
-    User posuser
+# Socks proxy
+Host socks
+    HostName lassssgate01.traderjoes.com
+    User gbeal
+    DynamicForward 1080
+    RequestTTY no
+    SessionType none
+
+
+# Registers behind the jump box
+Host 172.20.* 172.22.* 172.23.* 172.31.*
+    User root
     ProxyJump jumpbox
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel Error
 
-Host 10.60.*
-    User posuser
-    ProxyJump jumpbox
 
-# Per-machine overrides (gitignored).
-# NOTE: 'Include' uses paths relative to the config file's directory on Windows.
-Include config.local
+
+# Individual Hosts
+
+Host 100.124.1.117
+  HostName 100.124.1.117
+  User gbeal
+
+Host lasstrlinux01
+  HostName lasstrlinux01
+  User gbeal
+
+# Personal Hosts
+
+Host fedora-vm
+  HostName 100.114.72.45
+  User greg
+
+Host outpost.tail9579a2.ts.net
+  User root
+  HostName outpost.tail9579a2.ts.net

@@ -25,14 +25,10 @@ if (Get-Module -ListAvailable -Name posh-git) {
     Import-Module posh-git
 }
 
-# ---------- Oh My Posh prompt ----------
-if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-    $theme = "$env:POSH_THEMES_PATH\atomic.omp.json"
-    if (Test-Path $theme) {
-        oh-my-posh init pwsh --config $theme | Invoke-Expression
-    } else {
-        oh-my-posh init pwsh | Invoke-Expression
-    }
+# ---------- Starship prompt ----------
+# (Replaces Oh My Posh — same prompt config used on Mac/WSL/Linux)
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&starship init powershell)
 }
 
 # ---------- Aliases ----------

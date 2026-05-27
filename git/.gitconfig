@@ -2,8 +2,8 @@
 # Fill in name/email below, OR use the includeIf blocks for per-folder identity.
 
 [user]
-    # name = Your Name
-    # email = your.email@example.com
+     name = Greg Beal
+     email = gbeal@gbeal.com
 
 [init]
     defaultBranch = main
@@ -43,12 +43,12 @@
 # gh CLI takes care of GitHub auth via its own credential helper.
 # After 'gh auth login', git automatically uses gh's stored token for HTTPS.
 [credential "https://github.com"]
-    helper =
-    helper = !gh auth git-credential
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
 
 [credential "https://gist.github.com"]
-    helper =
-    helper = !gh auth git-credential
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
 
 # --- Per-folder identity (multi-account) ---
 # Uncomment after creating ~/.gitconfig-work and ~/.gitconfig-personal

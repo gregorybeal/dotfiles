@@ -1,11 +1,15 @@
 # Defaults for everything
+  Host lasstrlinux01
+    HostName lasstrlinux01
+    User gbeal
+
 Host *
     ServerAliveInterval 60
     ServerAliveCountMax 3
     ControlMaster auto
     ControlPath ~/.ssh/sockets/%r@%h-%p
     ControlPersist 600
-    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.s
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 
 # Jump box

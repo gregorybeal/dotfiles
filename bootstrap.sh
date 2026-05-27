@@ -54,6 +54,7 @@ if [ "$PLATFORM" = "mac" ]; then
         tmux \
         git \
         gh \
+        starship \
         fzf \
         bat \
         eza \
@@ -102,6 +103,12 @@ else
             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
             && sudo apt update \
             && sudo apt install gh -y
+    fi
+
+    # Starship prompt — official installer, drops binary in /usr/local/bin
+    if ! command -v starship >/dev/null 2>&1; then
+        echo "  Installing Starship..."
+        curl -sS https://starship.rs/install.sh | sh -s -- --yes
     fi
 
     # Install eza if available (newer ubuntus)

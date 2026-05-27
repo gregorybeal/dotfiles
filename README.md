@@ -171,6 +171,7 @@ Organize repos under `~/code/work/` and `~/code/personal/` and the right identit
 - tmux / psmux
 - git
 - **gh CLI**
+- **Starship prompt** (cross-shell, replaces Oh My Posh & Agnoster)
 - fzf, bat, fd, ripgrep, jq, zoxide
 - Python 3
 - VS Code + extensions
@@ -181,7 +182,6 @@ Organize repos under `~/code/work/` and `~/code/personal/` and the right identit
 
 ### Windows additions
 - Windows Terminal
-- Oh My Posh
 - PSReadLine, Terminal-Icons, posh-git modules
 - ssh-agent service enabled
 - FiraCode Nerd Font
@@ -198,6 +198,7 @@ Organize repos under `~/code/work/` and `~/code/personal/` and the right identit
 | `.bashrc` | `~/.bashrc` | `~/.bashrc` | — |
 | `aliases.sh` | `~/.aliases.sh` | `~/.aliases.sh` | — |
 | `.tmux.conf` | `~/.tmux.conf` | `~/.tmux.conf` | `%USERPROFILE%\.tmux.conf` |
+| Starship config | `~/.config/starship.toml` | `~/.config/starship.toml` | `%USERPROFILE%\.config\starship.toml` |
 | `.gitconfig` | `~/.gitconfig` | `~/.gitconfig` | `%USERPROFILE%\.gitconfig` |
 | SSH config | `~/.ssh/config` (mac) | `~/.ssh/config` (wsl) | `%USERPROFILE%\.ssh\config` (no ControlMaster) |
 | PowerShell profile | — | — | `$PROFILE` |

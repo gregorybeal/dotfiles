@@ -104,6 +104,15 @@ if ! command -v jq >/dev/null 2>&1; then
 else
     echo "  ✓ jq already installed"
 fi
+
+# Starship — userspace install
+if ! command -v starship >/dev/null 2>&1; then
+    echo "  Installing Starship to $LOCAL_BIN..."
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$LOCAL_BIN"
+    echo "  ✓ starship installed"
+else
+    echo "  ✓ starship already installed"
+fi
 echo ""
 
 # ----------------------------------------

@@ -52,6 +52,11 @@ link "$DOTFILES/shell/aliases.sh" "$HOME/.aliases.sh"
 echo "tmux config:"
 link "$DOTFILES/tmux/.tmux.conf" "$HOME/.tmux.conf"
 
+# --- starship ---
+echo "Starship config:"
+mkdir -p "$HOME/.config"
+link "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
+
 # --- git ---
 echo "git config:"
 link "$DOTFILES/git/.gitconfig" "$HOME/.gitconfig"

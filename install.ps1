@@ -46,6 +46,14 @@ Link-File "$Dotfiles\powershell\Microsoft.PowerShell_profile.ps1" $profilePath
 Write-Host "tmux/psmux config:"
 Link-File "$Dotfiles\tmux\.tmux.conf" "$env:USERPROFILE\.tmux.conf"
 
+# --- Starship ---
+Write-Host "Starship config:"
+$starshipConfigDir = "$env:USERPROFILE\.config"
+if (-not (Test-Path $starshipConfigDir)) {
+    New-Item -ItemType Directory -Path $starshipConfigDir -Force | Out-Null
+}
+Link-File "$Dotfiles\starship\starship.toml" "$starshipConfigDir\starship.toml"
+
 # --- git ---
 Write-Host "git config:"
 Link-File "$Dotfiles\git\.gitconfig" "$env:USERPROFILE\.gitconfig"

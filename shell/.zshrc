@@ -2,7 +2,8 @@
 
 # ---------- Oh My Zsh ----------
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="agnoster"
+# Theme handled by Starship below — set to empty so omz doesn't override
+ZSH_THEME=""
 
 plugins=(
     git
@@ -20,6 +21,11 @@ plugins=(
 # before omz is set up)
 if [ -f "$ZSH/oh-my-zsh.sh" ]; then
     source "$ZSH/oh-my-zsh.sh"
+fi
+
+# ---------- Starship prompt ----------
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
 fi
 
 # ---------- History ----------
@@ -70,3 +76,4 @@ bindkey '^R' history-incremental-search-backward
 # User-local bins
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
+[ -d "$HOME/.fzf/bin" ] && export PATH="$HOME/.fzf/bin:$PATH"

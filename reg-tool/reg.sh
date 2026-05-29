@@ -215,7 +215,7 @@ reg-tmux-pair() {
 
 reg-refresh() {
     local source="${1:-local}"
-    python3 "$REG_TOOL_DIR/refresh.py" --source "$source"
+    uv run "$REG_TOOL_DIR/refresh.py" --source "$source"
 }
 
 reg-tunnels() {

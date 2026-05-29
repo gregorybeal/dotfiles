@@ -1,3 +1,7 @@
+# ~/.ssh/config — Mac, Linux, WSL
+# GitHub auth handled by gh CLI over HTTPS — no GitHub SSH needed here.
+# This config covers your jump box + registers.
+
 # Defaults for everything
 Host *
     ServerAliveInterval 60
@@ -5,6 +9,13 @@ Host *
     ControlMaster auto
     ControlPath ~/.ssh/sockets/%r@%h-%p
     ControlPersist 600
+
+
+# macOS only: store SSH key passphrases in the Keychain so you only
+# type them once (then they unlock automatically with your login).
+# The Match block runs the test and silently no-ops on Linux/WSL.
+Match host * exec "uname -s | grep -q Darwin"
+    UseKeychain yes
 
 
 # Jump box

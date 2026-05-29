@@ -46,13 +46,52 @@ Link-File "$Dotfiles\powershell\Microsoft.PowerShell_profile.ps1" $profilePath
 Write-Host "tmux/psmux config:"
 Link-File "$Dotfiles\tmux\.tmux.conf" "$env:USERPROFILE\.tmux.conf"
 
+# --- Starship ---
+Write-Host "Starship config:"
+$starshipConfigDir = "$env:USERPROFILE\.config"
+if (-not (Test-Path $starshipConfigDir)) {
+    New-Item -ItemType Directory -Path $starshipConfigDir -Force | Out-Null
+}
+Link-File "$Dotfiles\starship\starship.toml" "$starshipConfigDir\starship.toml"
+
 # --- git ---
 Write-Host "git config:"
 Link-File "$Dotfiles\git\.gitconfig" "$env:USERPROFILE\.gitconfig"
 
-# --- ssh (Windows-specific, no ControlMaster) ---
+# --- ssh ---
 Write-Host "SSH config:"
-Link-File "$Dotfiles\ssh\config.windows" "$env:USERPROFILE\.ssh\config"
+
+# Determine which SSH config variant to use.
+# Priority: 1) env var override, 2) interactive prompt, 3) platform default (windows)
+$sshVariant = $env:DOTFILES_SSH_VARIANT
+
+if (-not $sshVariant) {
+    $defaultVariant = "windows"
+
+    # Only prompt if running interactively
+    if ([Environment]::UserInteractive -and -not [Console]::IsInputRedirected) {
+        Write-Host ""
+        Write-Host "  Which SSH config variant?"
+        Write-Host "    1) $defaultVariant   — full config (jump box + registers) [default]"
+        Write-Host "    2) minimal   — bare bones, no corp network refs"
+        Write-Host ""
+        $choice = Read-Host "  Choice [1]"
+        switch -Regex ($choice) {
+            '^(2|minimal|m)$' { $sshVariant = "minimal" }
+            default           { $sshVariant = $defaultVariant }
+        }
+    } else {
+        $sshVariant = $defaultVariant
+    }
+}
+
+$sshSource = "$Dotfiles\ssh\config.$sshVariant"
+if (-not (Test-Path $sshSource)) {
+    Write-Host "  [warn] config.$sshVariant not found — falling back to config.windows" -ForegroundColor Yellow
+    $sshSource = "$Dotfiles\ssh\config.windows"
+}
+Write-Host "  Using $sshSource"
+Link-File $sshSource "$env:USERPROFILE\.ssh\config"
 
 # --- reg-tool ---
 Write-Host "reg-tool:"

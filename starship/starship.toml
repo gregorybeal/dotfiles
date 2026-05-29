@@ -1,0 +1,101 @@
+# ~/.config/starship.toml
+# Minimal: shell, directory, SSH host (when remote), arrow on line 2.
+
+format = """
+$shell\
+$directory\
+$hostname
+$character"""
+
+command_timeout = 500
+add_newline = true
+
+[shell]
+disabled = false
+format = "[$indicator]($style) "
+style = "bold cyan"
+bash_indicator = "bash"
+zsh_indicator = "zsh"
+powershell_indicator = "pwsh"
+fish_indicator = "fish"
+unknown_indicator = "sh"
+
+[directory]
+style = "bold blue"
+truncation_length = 4
+truncate_to_repo = true
+truncation_symbol = "…/"
+home_symbol = "~"
+read_only = " [RO]"
+read_only_style = "red"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[hostname]
+ssh_only = true
+ssh_symbol = "🌐 "
+format = "[$ssh_symbol$hostname]($style) "
+style = "bold yellow"
+trim_at = "."
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[V](bold yellow)"
+
+# Disable everything else
+[username]
+disabled = true
+[git_branch]
+disabled = true
+[git_status]
+disabled = true
+[git_state]
+disabled = true
+[cmd_duration]
+disabled = true
+[jobs]
+disabled = true
+[status]
+disabled = true
+[time]
+disabled = true
+[python]
+disabled = true
+[nodejs]
+disabled = true
+[rust]
+disabled = true
+[golang]
+disabled = true
+[java]
+disabled = true
+[ruby]
+disabled = true
+[php]
+disabled = true
+[dotnet]
+disabled = true
+[c]
+disabled = true
+[aws]
+disabled = true
+[gcloud]
+disabled = true
+[azure]
+disabled = true
+[kubernetes]
+disabled = true
+[docker_context]
+disabled = true
+[terraform]
+disabled = true
+[package]
+disabled = true
+[memory_usage]
+disabled = true
+[battery]
+disabled = true
+[localip]
+disabled = true
+[shlvl]
+disabled = true

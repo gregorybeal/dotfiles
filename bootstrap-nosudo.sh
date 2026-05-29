@@ -14,7 +14,7 @@ echo ""
 
 # Quick capability scan
 echo "What's already available:"
-for tool in bash zsh tmux screen git curl wget fzf bat fd rg jq python3 vim ssh; do
+for tool in bash zsh tmux screen git curl wget fzf bat fd rg jq vim ssh; do
     if command -v "$tool" >/dev/null 2>&1; then
         echo "  ✓ $tool"
     else
@@ -104,6 +104,24 @@ if ! command -v jq >/dev/null 2>&1; then
 else
     echo "  ✓ jq already installed"
 fi
+
+# Starship — userspace install
+if ! command -v starship >/dev/null 2>&1; then
+    echo "  Installing Starship to $LOCAL_BIN..."
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$LOCAL_BIN"
+    echo "  ✓ starship installed"
+else
+    echo "  ✓ starship already installed"
+fi
+
+# uv — Python toolchain (userspace install)
+if ! command -v uv >/dev/null 2>&1; then
+    echo "  Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$LOCAL_BIN" sh
+    echo "  ✓ uv installed"
+else
+    echo "  ✓ uv already installed"
+fi
 echo ""
 
 # ----------------------------------------
@@ -167,7 +185,10 @@ echo ""
 # ----------------------------------------
 
 echo "[5/5] Linking configs"
-"$DOTFILES/install.sh"
+# Use the minimal SSH config (no jump box / no registers) by default.
+# Override with: DOTFILES_SSH_VARIANT=wsl ./bootstrap-nosudo.sh
+DOTFILES_SSH_VARIANT="${DOTFILES_SSH_VARIANT:-minimal}" \
+    "$DOTFILES/install.sh"
 
 echo ""
 echo "========================================"

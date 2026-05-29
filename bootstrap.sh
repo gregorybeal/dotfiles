@@ -36,7 +36,7 @@ echo ""
 # ----------------------------------------
 
 if [ "$PLATFORM" = "mac" ]; then
-    echo "[1/5] Homebrew + tools"
+    echo "[1/5] Homebrew + tools (via Brewfile)"
     if ! command -v brew >/dev/null 2>&1; then
         echo "  Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -49,28 +49,18 @@ if [ "$PLATFORM" = "mac" ]; then
     fi
 
     brew update
-    brew install \
-        zsh \
-        tmux \
-        git \
-        gh \
-        fzf \
-        bat \
-        eza \
-        fd \
-        ripgrep \
-        zoxide \
-        jq \
-        yq \
-        tldr \
-        htop \
-        btop \
-        wget \
-        python3 \
-        sshfs
+
+    # Install everything from the Brewfile (CLI tools, GUI apps, MAS apps, vscode extensions)
+    if [ -f "$DOTFILES/mac/Brewfile" ]; then
+        echo "  Running brew bundle from mac/Brewfile (this takes a while on a fresh install)..."
+        brew bundle --file="$DOTFILES/mac/Brewfile"
+    else
+        echo "  ⚠ mac/Brewfile not found — falling back to minimal install"
+        brew install zsh tmux git gh starship uv fzf bat eza fd ripgrep jq
+    fi
 
     # fzf shell integration
-    $(brew --prefix)/opt/fzf/install --all --no-bash --no-fish
+    $(brew --prefix)/opt/fzf/install --all --no-bash --no-fish 2>/dev/null || true
 
 else
     # WSL/Linux
@@ -87,9 +77,6 @@ else
         fd-find \
         ripgrep \
         jq \
-        python3 \
-        python3-pip \
-        sshfs \
         htop
 
     # gh CLI — not always in default apt, install from GitHub's apt repo
@@ -102,6 +89,18 @@ else
             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
             && sudo apt update \
             && sudo apt install gh -y
+    fi
+
+    # Starship prompt — official installer, drops binary in /usr/local/bin
+    if ! command -v starship >/dev/null 2>&1; then
+        echo "  Installing Starship..."
+        curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    fi
+
+    # uv — Python package/project/version manager (Rust, fast)
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "  Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
     fi
 
     # Install eza if available (newer ubuntus)
@@ -238,6 +237,21 @@ echo "========================================"
 echo " Bootstrap complete!"
 echo "========================================"
 echo ""
+
+# Offer to apply macOS defaults if on Mac
+if [ "$PLATFORM" = "mac" ] && [ -f "$DOTFILES/mac/macos-defaults.sh" ]; then
+    echo "  macOS defaults script available."
+    if [ -t 0 ]; then
+        printf "  Apply now? [y/N] "
+        read -r apply_defaults
+        case "$apply_defaults" in
+            y|Y|yes) "$DOTFILES/mac/macos-defaults.sh" ;;
+            *)       echo "  Skipped. Run later with: make macos-defaults" ;;
+        esac
+    fi
+fi
+
+echo ""
 echo "  Next:"
 echo "  1. chsh -s \$(which zsh)  # if zsh isn't your default shell yet"
 echo "  2. Restart your terminal"
@@ -246,4 +260,5 @@ echo "  4. Authenticate with GitHub:  gh auth login"
 echo "       (pick HTTPS, then 'Yes' to authenticate git)"
 echo "  5. Edit ~/.config/reg-tool/config"
 echo "  6. Run: reg-refresh"
+echo "  7. Verify: make doctor"
 echo ""

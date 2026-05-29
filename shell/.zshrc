@@ -2,7 +2,8 @@
 
 # ---------- Oh My Zsh ----------
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="agnoster"
+# Theme handled by Starship below — set to empty so omz doesn't override
+ZSH_THEME=""
 
 plugins=(
     git
@@ -20,6 +21,11 @@ plugins=(
 # before omz is set up)
 if [ -f "$ZSH/oh-my-zsh.sh" ]; then
     source "$ZSH/oh-my-zsh.sh"
+fi
+
+# ---------- Starship prompt ----------
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
 fi
 
 # ---------- History ----------
@@ -59,6 +65,14 @@ bindkey '^R' history-incremental-search-backward
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/fzf/key-bindings.zsh ] && source /usr/share/fzf/key-bindings.zsh
 
+# ---------- uv (Python toolchain) ----------
+if command -v uv >/dev/null 2>&1; then
+    eval "$(uv generate-shell-completion zsh)"
+    eval "$(uvx --generate-shell-completion zsh 2>/dev/null)" 2>/dev/null || true
+fi
+# Make sure uv's tool bin dir is in PATH
+[ -d "$HOME/.local/share/uv/tools" ] && export PATH="$HOME/.local/bin:$PATH"
+
 # ---------- Local-only / secrets ----------
 # Anything machine-specific or sensitive goes here, NOT in the repo
 [ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
@@ -70,3 +84,4 @@ bindkey '^R' history-incremental-search-backward
 # User-local bins
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
+[ -d "$HOME/.fzf/bin" ] && export PATH="$HOME/.fzf/bin:$PATH"

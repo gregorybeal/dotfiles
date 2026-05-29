@@ -1,0 +1,140 @@
+# Brewfile — declarative install for Mac.
+# Run with: brew bundle --file=mac/Brewfile
+# Or:       make brew
+#
+# Comment out anything you don't want. Re-run is safe — idempotent.
+
+# ─────────────────────────────────────────────────────────────
+#  Taps (extra repos)
+# ─────────────────────────────────────────────────────────────
+
+tap "homebrew/bundle"
+tap "homebrew/services"
+
+# ─────────────────────────────────────────────────────────────
+#  CLI tools
+# ─────────────────────────────────────────────────────────────
+
+# Core shell tools
+brew "zsh"
+brew "tmux"
+brew "git"
+brew "gh"
+brew "starship"
+brew "uv"
+
+# Modern CLI replacements
+brew "fzf"
+brew "bat"
+brew "eza"
+brew "fd"
+brew "ripgrep"
+brew "zoxide"
+brew "jq"
+brew "yq"
+brew "tldr"
+brew "htop"
+brew "btop"
+
+# General utilities
+brew "wget"
+brew "curl"
+brew "tree"
+brew "watch"
+brew "coreutils"            # GNU versions of date, ls, etc.
+brew "gnu-sed"              # sed with GNU flags
+
+# Network / SSH
+brew "openssh"
+brew "mtr"                  # better traceroute
+brew "nmap"                 # network scanner
+brew "iperf3"               # bandwidth test
+
+# Dev
+brew "node"                 # for occasional npm tools
+brew "ansible"              # if you ever run from Mac
+brew "sqlite"               # cli for your reg-tool DB
+
+# Mac App Store CLI (required for `mas` lines below)
+brew "mas"
+
+# ─────────────────────────────────────────────────────────────
+#  GUI Apps (casks)
+# ─────────────────────────────────────────────────────────────
+
+# Terminals
+cask "ghostty"
+cask "iterm2"               # backup terminal
+
+# Browsers
+cask "microsoft-edge"
+cask "google-chrome"
+cask "firefox"
+
+# Communication
+cask "zoom"
+cask "microsoft-teams"
+cask "microsoft-office"
+
+# Productivity
+cask "1password"
+cask "1password-cli"        # for SSH agent + scripting
+cask "raycast"              # Spotlight replacement — highly recommended
+cask "alt-tab"              # better cmd-tab (per-window, not per-app)
+cask "the-unarchiver"       # opens .rar, .7z, etc.
+cask "appcleaner"           # uninstall apps properly
+cask "maccy"                # clipboard manager
+cask "hazel"                # auto file processing
+cask "hazeover"             # window focus tool
+cask "logi-options+"        # mouse manager
+
+
+# Development
+cask "visual-studio-code"
+cask "github"               # GitHub Desktop, sometimes handy
+cask "bruno"              # API testing (or use Bruno: cask "bruno")
+cask "tableplus"            # DB GUI — works with your SQLite + DB2 stuff
+cask "dbeaver-community"
+
+# Remote / RDP / VNC
+cask "microsoft-remote-desktop"
+cask "royal-tsx"
+cask "vnc-viewer"            # for register VNC access
+
+# Media
+cask "vlc"
+
+# Fonts (Nerd Fonts for terminal)
+cask "font-fira-code-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-cascadia-code-nf"
+
+# Utilities
+cask "stats"                # menu bar system stats
+cask "betterdisplay"        # control external monitor brightness from Mac
+cask "rectangle-pro"        # window management
+
+# ─────────────────────────────────────────────────────────────
+#  Mac App Store apps
+# ─────────────────────────────────────────────────────────────
+# Comment out anything you don't have / want.
+# To find IDs: mas search "<name>"
+
+mas "Xcode",                     id: 497799835
+mas "TestFlight",                id: 899247664
+mas "Things 3",                id: 904280696   # task manager (paid)
+mas "StopTheMadness Pro", id: 6471380298
+mas "Peek", id: 1554235898
+mas "1Password for Safari ", id: 1569813296
+mas "Amphetamine", id: 937984704
+mas "Microsoft To Do", id: 1274495053
+
+# ─────────────────────────────────────────────────────────────
+#  uv-managed Python CLI tools
+# ─────────────────────────────────────────────────────────────
+
+uv "ruff"                   # linter/formatter
+uv "httpie"                 # better curl
+uv "glances"                # system monitor
+uv "ipython"                # better REPL
+uv "yt-dlp"                 # video downloader (optional)

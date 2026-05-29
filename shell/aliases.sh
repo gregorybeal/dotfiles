@@ -44,6 +44,18 @@ alias ghv='gh pr view --web'
 alias ghc='gh pr create --fill --web'
 alias ghi='gh issue list --assignee @me'
 
+# uv (Python toolchain)
+alias uvr='uv run'                          # run a script/command in project env
+alias uvs='uv sync'                         # install/update from lockfile
+alias uva='uv add'                          # add a dependency
+alias uvrm='uv remove'                      # remove a dependency
+alias uvt='uv tool'                         # uv tool subcommands
+alias uvti='uv tool install'                # install a CLI tool globally
+alias uvtu='uv tool upgrade --all'          # upgrade all installed tools
+alias uvtl='uv tool list'                   # list installed tools
+alias uvpy='uv python'                      # python version management
+alias uvx='uv tool run'                     # one-off run (like pipx run)
+
 # Quick edits / reloads
 alias reload-shell='exec $SHELL -l'
 alias edit-zsh='${EDITOR:-vi} ~/.zshrc'

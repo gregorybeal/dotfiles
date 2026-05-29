@@ -25,14 +25,15 @@ if (Get-Module -ListAvailable -Name posh-git) {
     Import-Module posh-git
 }
 
-# ---------- Oh My Posh prompt ----------
-if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-    $theme = "$env:POSH_THEMES_PATH\atomic.omp.json"
-    if (Test-Path $theme) {
-        oh-my-posh init pwsh --config $theme | Invoke-Expression
-    } else {
-        oh-my-posh init pwsh | Invoke-Expression
-    }
+# ---------- Starship prompt ----------
+# (Replaces Oh My Posh — same prompt config used on Mac/WSL/Linux)
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&starship init powershell)
+}
+
+# ---------- uv (Python toolchain) ----------
+if (Get-Command uv -ErrorAction SilentlyContinue) {
+    (& uv generate-shell-completion powershell) | Out-String | Invoke-Expression
 }
 
 # ---------- Aliases ----------
@@ -62,6 +63,17 @@ function ghl { gh pr list }
 function ghv { gh pr view --web }
 function ghc { gh pr create --fill --web }
 function ghi { gh issue list --assignee @me }
+
+# ---------- uv (Python toolchain) ----------
+function uvr  { uv run $args }
+function uvs  { uv sync $args }
+function uva  { uv add $args }
+function uvrm { uv remove $args }
+function uvt  { uv tool $args }
+function uvti { uv tool install $args }
+function uvtu { uv tool upgrade --all }
+function uvtl { uv tool list }
+function uvpy { uv python $args }
 
 # ---------- tmux/psmux shortcuts ----------
 function t   { tmux $args }

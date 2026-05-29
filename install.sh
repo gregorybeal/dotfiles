@@ -52,6 +52,11 @@ link "$DOTFILES/shell/aliases.sh" "$HOME/.aliases.sh"
 echo "tmux config:"
 link "$DOTFILES/tmux/.tmux.conf" "$HOME/.tmux.conf"
 
+# --- starship ---
+echo "Starship config:"
+mkdir -p "$HOME/.config"
+link "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
+
 # --- git ---
 echo "git config:"
 link "$DOTFILES/git/.gitconfig" "$HOME/.gitconfig"
@@ -60,12 +65,41 @@ link "$DOTFILES/git/.gitconfig" "$HOME/.gitconfig"
 echo "SSH config:"
 mkdir -p "$HOME/.ssh/sockets"
 chmod 700 "$HOME/.ssh/sockets"
-if [ "$PLATFORM" = "mac" ]; then
-    link "$DOTFILES/ssh/config.mac" "$HOME/.ssh/config"
-else
-    link "$DOTFILES/ssh/config.wsl" "$HOME/.ssh/config"
+
+# Determine which SSH config variant to use.
+# Priority: 1) env var override, 2) interactive prompt, 3) default (unix)
+SSH_VARIANT="${DOTFILES_SSH_VARIANT:-}"
+
+if [ -z "$SSH_VARIANT" ]; then
+    # Default for Mac/Linux/WSL is 'unix' (single shared config)
+    DEFAULT_VARIANT="unix"
+
+    # Only prompt if stdin is a terminal (interactive run)
+    if [ -t 0 ]; then
+        echo ""
+        echo "  Which SSH config variant?"
+        echo "    1) unix     — full config (jump box + registers) [default]"
+        echo "    2) minimal  — bare bones, no corp network refs"
+        echo ""
+        printf "  Choice [1]: "
+        read -r choice
+        case "$choice" in
+            2|minimal|m|M) SSH_VARIANT="minimal" ;;
+            *)             SSH_VARIANT="$DEFAULT_VARIANT" ;;
+        esac
+    else
+        SSH_VARIANT="$DEFAULT_VARIANT"
+    fi
 fi
-chmod 600 "$DOTFILES/ssh/config.mac" "$DOTFILES/ssh/config.wsl" 2>/dev/null || true
+
+SSH_SOURCE="$DOTFILES/ssh/config.$SSH_VARIANT"
+if [ ! -f "$SSH_SOURCE" ]; then
+    echo "  [warn] ssh/config.$SSH_VARIANT not found — falling back to config.unix"
+    SSH_SOURCE="$DOTFILES/ssh/config.unix"
+fi
+echo "  Using $SSH_SOURCE"
+link "$SSH_SOURCE" "$HOME/.ssh/config"
+chmod 600 "$DOTFILES/ssh/config".* 2>/dev/null || true
 
 # --- reg-tool ---
 echo "reg-tool:"
@@ -80,6 +114,31 @@ if [ ! -f "$HOME/.config/reg-tool/config" ]; then
 else
     echo "  [keep] ~/.config/reg-tool/config (already exists)"
 fi
+
+# --- ghostty terminal (Mac/Linux config path) ---
+if [ -d "$DOTFILES/ghostty" ]; then
+    echo "Ghostty config:"
+    mkdir -p "$HOME/.config/ghostty"
+    link "$DOTFILES/ghostty/config" "$HOME/.config/ghostty/config"
+fi
+
+# --- vscode snippets ---
+if [ -d "$DOTFILES/vscode/snippets" ]; then
+    echo "VS Code snippets:"
+    case "$PLATFORM" in
+        mac)        VSCODE_USER="$HOME/Library/Application Support/Code/User" ;;
+        wsl|linux)  VSCODE_USER="$HOME/.config/Code/User" ;;
+    esac
+    if [ -n "$VSCODE_USER" ]; then
+        mkdir -p "$VSCODE_USER/snippets"
+        for snippet in "$DOTFILES/vscode/snippets"/*.json; do
+            [ -f "$snippet" ] && link "$snippet" "$VSCODE_USER/snippets/$(basename "$snippet")"
+        done
+    fi
+fi
+
+# --- scripts directory: make sure helpers are executable ---
+chmod +x "$DOTFILES/scripts"/*.sh 2>/dev/null || true
 
 echo ""
 echo "Done. Next steps:"

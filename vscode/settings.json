@@ -1,103 +1,104 @@
 {
-    "// ---------- Editor ----------": "",
-    "editor.fontFamily": "'FiraCode Nerd Font', 'JetBrainsMono Nerd Font', Consolas, monospace",
-    "editor.fontSize": 14,
-    "editor.fontLigatures": true,
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "editor.renderWhitespace": "boundary",
-    "editor.rulers": [80, 120],
-    "editor.minimap.enabled": false,
-    "editor.bracketPairColorization.enabled": true,
-    "editor.guides.bracketPairs": "active",
-    "editor.formatOnSave": false,
-    "editor.wordWrap": "off",
-    "editor.cursorBlinking": "smooth",
-    "editor.cursorSmoothCaretAnimation": "on",
-
-    "// ---------- Files ----------": "",
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "files.autoSave": "onFocusChange",
-    "files.exclude": {
-        "**/.git": true,
-        "**/.DS_Store": true,
-        "**/__pycache__": true,
-        "**/*.pyc": true
+    "xml.server.binary.trustedHashes": [
+        "f3b415f7afb34bebe52fd6ec9d08939b528678d37b69e33a0d0ae6fc9fda4e41"
+    ],
+    "redhat.telemetry.enabled": true,
+    "remote.SSH.remotePlatform": {
+        "10.240.142.104": "linux",
+        "10.242.200.75": "linux",
+        "dalstrgate03": "windows",
+        "lassssgate01": "windows",
+        "100.104.22.54": "linux",
+        "lasstrlinux01": "linux",
+        "100.114.72.45": "linux",
+        "fedora-vm": "linux",
+        "100.124.1.117": "macOS",
+        "outpost.tail9579a2.ts.net": "linux"
     },
-
-    "// ---------- Workbench / theme ----------": "",
-    "workbench.colorTheme": "Default Dark Modern",
-    "workbench.iconTheme": "vs-seti",
-    "workbench.startupEditor": "none",
-    "workbench.editor.enablePreview": false,
-
-    "// ---------- Terminal ----------": "",
-    "terminal.integrated.fontFamily": "'FiraCode Nerd Font', 'JetBrainsMono Nerd Font', Consolas, monospace",
-    "terminal.integrated.fontSize": 13,
-    "terminal.integrated.cursorBlinking": true,
-    "terminal.integrated.cursorStyle": "line",
-    "terminal.integrated.scrollback": 50000,
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "terminal.integrated.defaultProfile.osx": "zsh",
-    "terminal.integrated.defaultProfile.linux": "zsh",
-    "terminal.integrated.profiles.windows": {
-        "PowerShell": {
-            "source": "PowerShell",
-            "icon": "terminal-powershell"
-        },
-        "WSL": {
-            "path": "wsl.exe",
-            "icon": "terminal-ubuntu"
-        }
+    "editor.unicodeHighlight.nonBasicASCII": false,
+    "security.workspace.trust.untrustedFiles": "open",
+    "files.associations": {
+        "*.log*": "log",
+        "*.out*": "log",
+        "*.1": "log",
+        "*.2": "log",
+        "*.3": "log",
+        "*.4": "log",
+        "*.5": "log",
+        "*.6": "log",
+        "*.7": "log",
+        "*.8": "log",
+        "*.log": "Log"
     },
-
-    "// ---------- Git ----------": "",
-    "git.autofetch": true,
-    "git.confirmSync": false,
-    "git.enableSmartCommit": true,
-    "git.suggestSmartCommit": false,
-
-    "// ---------- Language specific ----------": "",
+    "logFileHighlighter.customPatterns": [
+    
+    ],
+    "editor.unicodeHighlight.invisibleCharacters": false,
     "[python]": {
-        "editor.tabSize": 4,
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.formatOnType": true
     },
-    "[yaml]": {
-        "editor.tabSize": 2,
-        "editor.insertSpaces": true
-    },
-    "[json]": {
-        "editor.tabSize": 2,
-        "editor.formatOnSave": true
-    },
-    "[markdown]": {
-        "editor.wordWrap": "on",
-        "editor.quickSuggestions": {
-            "comments": "off",
-            "strings": "off",
-            "other": "off"
-        }
-    },
-    "[shellscript]": {
-        "editor.tabSize": 4,
-        "files.eol": "\n"
-    },
-    "[powershell]": {
-        "editor.tabSize": 4
-    },
+    "auto-build.defaultEnv.name": "mks_robin_nano35",
+    "git.enableSmartCommit": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "github.copilot.advanced": {
+        "debug.useNodeFetcher": true
 
-    "// ---------- Misc ----------": "",
-    "explorer.confirmDelete": true,
-    "explorer.confirmDragAndDrop": false,
-    "search.exclude": {
-        "**/node_modules": true,
-        "**/.venv": true,
-        "**/__pycache__": true,
-        "**/*.log": true
+
+
     },
+    "http.proxyStrictSSL": false,
+    "http.proxyAuthorization": null,
     "telemetry.telemetryLevel": "off",
-    "update.showReleaseNotes": false
+    "vscode-office.editorTheme": "Github Dark",
+    "workbench.colorTheme": "Light Modern",
+    "window.autoDetectColorScheme": true,
+    "workbench.editorAssociations": {},
+    "yaml.schemas": {
+        "file:///home/gbeal/.vscode-server/extensions/docsmsft.docs-yaml-1.0.6/dist/toc.schema.json": "/toc\\.yml/i"
+    },
+    "chat.commandCenter.enabled": false,
+    "security.allowedUNCHosts": [
+        "lassssgate01",
+        "mondistrib01",
+        "prdssskb01"
+    ],
+    "dart.flutterSdkPath": "C:\\Temp\\Flutter\\flutter",
+    "workbench.preferredLightColorTheme": "Visual Studio Dark",
+    "git.confirmSync": false,
+    "atlascode.bitbucket.explorer.enabled": false,
+    "atlascode.bitbucket.statusbar.enabled": false,
+    "git.autofetch": true,
+    "atlascode.jira.lastCreateSiteAndProject": {
+        "siteId": "61fbe47e-9a0d-42e2-ad99-1f57786f1265",
+        "projectKey": "ACM25"
+    },
+    "[dockercompose]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "vscode-office.openOutline": true,
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
+    },
+    "githubPullRequests.pullBranch": "never",
+    "workbench.editor.enablePreview": false,
+    "editor.renderWhitespace": "all",
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
+    "ansible.executionEnvironment.volumeMounts": [],
+    "[ansible]": {
+        "editor.autoIndent": "advanced",
+        "editor.detectIndentation": true,
+        "editor.insertSpaces": true,
+        "editor.quickSuggestions": {
+            "comments": true,
+            "other": true,
+            "strings": true
+        },
+        "editor.tabSize": 2
+    }
 }

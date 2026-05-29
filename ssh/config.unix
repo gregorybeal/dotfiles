@@ -3,6 +3,10 @@
 # This config covers your jump box + registers.
 
 # Defaults for everything
+  Host lasstrlinux01
+    HostName lasstrlinux01
+    User gbeal
+
 Host *
     ServerAliveInterval 60
     ServerAliveCountMax 3

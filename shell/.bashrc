@@ -19,6 +19,16 @@ else
     }
     PS1='\[\e[36m\]\u@\h\[\e[0m\] \[\e[33m\]\w\[\e[0m\]\[\e[32m\]$(parse_git_branch)\[\e[0m\]\n\$ '
 fi
+# ---------- Prompt: Starship if available, fall back to a simple prompt ----------
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+else
+    # Fallback: simple prompt with git branch
+    parse_git_branch() {
+        git branch 2>/dev/null | sed -n 's/^\* \(.*\)/ (\1)/p'
+    }
+    PS1='\[\e[36m\]\u@\h\[\e[0m\] \[\e[33m\]\w\[\e[0m\]\[\e[32m\]$(parse_git_branch)\[\e[0m\]\n\$ '
+fi
 
 # ---------- Shared aliases ----------
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"

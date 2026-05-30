@@ -36,9 +36,28 @@ bootstrap-nosudo:  ## Full setup on restricted Linux box (no sudo)
 	@./bootstrap-nosudo.sh
 
 .PHONY: brew
-brew:  ## Install/update all Mac apps from Brewfile (Mac only)
+brew:  ## Install/update all Mac apps from Brewfile (Mac only — continues past failures)
 ifeq ($(OS),Darwin)
-	@brew bundle --file=mac/Brewfile
+	@echo "Caching sudo credentials (single prompt for all cask installs)..."
+	@sudo -v
+	@( while true; do sudo -n true; sleep 60; kill -0 $$$$ 2>/dev/null || exit; done ) & \
+		KEEPALIVE_PID=$$!; \
+		brew bundle --file=mac/Brewfile || { \
+			echo ""; \
+			echo "⚠ brew bundle hit errors. Retrying each item individually..."; \
+			echo ""; \
+			grep -vE '^\s*(#|$$)' mac/Brewfile | while IFS= read -r line; do \
+				case "$$line" in \
+					tap\ *) name=$$(echo "$$line" | sed -E 's/^tap[[:space:]]+"([^"]+)".*/\1/'); brew tap "$$name" 2>/dev/null || echo "  ✗ tap: $$name" ;; \
+					brew\ *) name=$$(echo "$$line" | sed -E 's/^brew[[:space:]]+"([^"]+)".*/\1/'); brew install "$$name" 2>/dev/null || echo "  ✗ brew: $$name" ;; \
+					cask\ *) name=$$(echo "$$line" | sed -E 's/^cask[[:space:]]+"([^"]+)".*/\1/'); brew install --cask "$$name" 2>/dev/null || echo "  ✗ cask: $$name" ;; \
+					mas\ *) id=$$(echo "$$line" | sed -E 's/.*id:[[:space:]]*([0-9]+).*/\1/'); mas install "$$id" 2>/dev/null || echo "  ✗ mas: $$id" ;; \
+					vscode\ *) name=$$(echo "$$line" | sed -E 's/^vscode[[:space:]]+"([^"]+)".*/\1/'); code --install-extension "$$name" --force 2>/dev/null || echo "  ✗ vscode: $$name" ;; \
+					uv\ *) name=$$(echo "$$line" | sed -E 's/^uv[[:space:]]+"([^"]+)".*/\1/'); uv tool install "$$name" 2>/dev/null || echo "  ✗ uv: $$name" ;; \
+				esac; \
+			done; \
+		}; \
+		kill $$KEEPALIVE_PID 2>/dev/null || true
 else
 	@echo "brew bundle only runs on Mac"
 endif

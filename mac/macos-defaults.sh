@@ -4,8 +4,10 @@
 #
 # Each setting has a one-line comment explaining what it does so you can
 # comment out anything you don't want.
-
-set -e
+#
+# NOTE: deliberately NOT using `set -e` — some `defaults write` calls may
+# fail due to sandboxing (e.g. Safari) or apps not being installed yet.
+# Those failures should be logged and skipped, not abort the run.
 
 if [ "$(uname -s)" != "Darwin" ]; then
     echo "This script only applies to macOS."
@@ -137,16 +139,13 @@ defaults write com.apple.screencapture type -string "png"
 defaults write com.apple.screencapture disable-shadow -bool true
 
 # ─────────────────────────────────────────────────────────────
-#  Safari / Webkit (lightweight; mostly dev-friendly)
+#  Safari / Webkit
 # ─────────────────────────────────────────────────────────────
-
-# Show full URL in address bar
-defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-
-# Enable Develop menu and Web Inspector
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
+# Skipped: Safari preferences live in a sandboxed container as of macOS Mojave+
+# and require Full Disk Access for the terminal to modify them. Not worth the
+# permission cost for a couple of toggles. Set these manually:
+#   - Settings → Advanced → "Show full URL in address bar"
+#   - Settings → Advanced → "Show Develop menu in menu bar"
 
 # ─────────────────────────────────────────────────────────────
 #  Terminal-related

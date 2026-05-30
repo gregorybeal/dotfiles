@@ -4,6 +4,7 @@
 [user]
      name = gregorybeal
      email = gbeal@gbeal.com
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGgQFu5y45IMj8QpDzWE7/PTCZec36+IWBv50kX8gjuE
 
 [init]
     defaultBranch = main
@@ -60,3 +61,9 @@
 # --- Machine-specific overrides (gitignored) ---
 [include]
     path = ~/.gitconfig.local
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+[commit]
+	gpgsign = true

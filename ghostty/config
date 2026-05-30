@@ -39,7 +39,7 @@ font-thicken = true
 # Auto-switch between light and dark Solarized based on macOS system
 # appearance. Format: theme = light:<name>,dark:<name>
 # When your Mac switches to dark mode (or via schedule), Ghostty follows.
-theme = light:Solarized Light,dark:Solarized Dark
+theme = light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark
 
 # ── Alternate themes ──────────────────────────────────────────
 # To use one instead of the auto-switching above, comment out the

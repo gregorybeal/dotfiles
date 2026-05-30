@@ -4,11 +4,26 @@
 #
 # Mac:  installs Homebrew + tools + Oh My Zsh + fonts
 # WSL:  apt install + Oh My Zsh + fonts (in Windows, separately)
+#
+# Tolerant of individual failures: if a single brew/apt install fails,
+# the script logs it and continues. Summary printed at the end.
 
-set -e
+# Note: deliberately NOT using `set -e` — we want to continue past failed
+# package installs and report at the end, not bail on the first error.
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 OS="$(uname -s)"
+BOOTSTRAP_ERRORS=()
+
+# Helper: run a command, log if it fails, but keep going
+try() {
+    local desc="$1"
+    shift
+    if ! "$@"; then
+        BOOTSTRAP_ERRORS+=("$desc")
+        echo "  ⚠ $desc failed — continuing" >&2
+    fi
+}
 
 case "$OS" in
     Darwin) PLATFORM="mac" ;;
@@ -53,10 +68,56 @@ if [ "$PLATFORM" = "mac" ]; then
     # Install everything from the Brewfile (CLI tools, GUI apps, MAS apps, vscode extensions)
     if [ -f "$DOTFILES/mac/Brewfile" ]; then
         echo "  Running brew bundle from mac/Brewfile (this takes a while on a fresh install)..."
-        brew bundle --file="$DOTFILES/mac/Brewfile"
+        echo "  Caching sudo credentials so casks don't prompt repeatedly..."
+
+        # Ask for password once, cache credentials
+        sudo -v
+
+        # Background loop: refresh sudo timestamp every minute until parent shell exits.
+        ( while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
+        SUDO_KEEPALIVE_PID=$!
+
+        # brew bundle stops on first failure. Run it once, then if it failed,
+        # parse the Brewfile and try each item individually so survivors get installed.
+        if ! brew bundle --file="$DOTFILES/mac/Brewfile"; then
+            echo ""
+            echo "  ⚠ brew bundle hit errors. Retrying each package individually..."
+            echo "  (Already-installed and successful items will be skipped quickly.)"
+            echo ""
+
+            # Process the Brewfile line by line; ignore comments + blanks
+            while IFS= read -r line; do
+                # Skip comments and empty lines
+                [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+
+                # Parse type + name (handles: brew "x", cask "x", tap "x", mas "x", id: N, vscode "x", uv "x")
+                if [[ "$line" =~ ^[[:space:]]*tap[[:space:]]+\"([^\"]+)\" ]]; then
+                    brew tap "${BASH_REMATCH[1]}" 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("tap: ${BASH_REMATCH[1]}")
+                elif [[ "$line" =~ ^[[:space:]]*brew[[:space:]]+\"([^\"]+)\" ]]; then
+                    brew install "${BASH_REMATCH[1]}" 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("brew: ${BASH_REMATCH[1]}")
+                elif [[ "$line" =~ ^[[:space:]]*cask[[:space:]]+\"([^\"]+)\" ]]; then
+                    brew install --cask "${BASH_REMATCH[1]}" 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("cask: ${BASH_REMATCH[1]}")
+                elif [[ "$line" =~ ^[[:space:]]*mas[[:space:]]+\"([^\"]+)\",[[:space:]]*id:[[:space:]]*([0-9]+) ]]; then
+                    mas install "${BASH_REMATCH[2]}" 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("mas: ${BASH_REMATCH[1]} (id ${BASH_REMATCH[2]})")
+                elif [[ "$line" =~ ^[[:space:]]*vscode[[:space:]]+\"([^\"]+)\" ]]; then
+                    code --install-extension "${BASH_REMATCH[1]}" --force 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("vscode: ${BASH_REMATCH[1]}")
+                elif [[ "$line" =~ ^[[:space:]]*uv[[:space:]]+\"([^\"]+)\" ]]; then
+                    uv tool install "${BASH_REMATCH[1]}" 2>/dev/null || \
+                        BOOTSTRAP_ERRORS+=("uv: ${BASH_REMATCH[1]}")
+                fi
+            done < "$DOTFILES/mac/Brewfile"
+        fi
+
+        # Stop the keepalive loop
+        kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     else
         echo "  ⚠ mac/Brewfile not found — falling back to minimal install"
-        brew install zsh tmux git gh starship uv fzf bat eza fd ripgrep jq
+        brew install zsh tmux git gh starship uv fzf bat eza fd ripgrep jq || true
     fi
 
     # fzf shell integration
@@ -237,6 +298,17 @@ echo "========================================"
 echo " Bootstrap complete!"
 echo "========================================"
 echo ""
+
+# Print summary of any failures
+if [ ${#BOOTSTRAP_ERRORS[@]} -gt 0 ]; then
+    echo "  ⚠ ${#BOOTSTRAP_ERRORS[@]} item(s) failed to install:"
+    for err in "${BOOTSTRAP_ERRORS[@]}"; do
+        echo "      - $err"
+    done
+    echo ""
+    echo "  These are non-fatal. Investigate manually if needed."
+    echo ""
+fi
 
 # Offer to apply macOS defaults if on Mac
 if [ "$PLATFORM" = "mac" ] && [ -f "$DOTFILES/mac/macos-defaults.sh" ]; then

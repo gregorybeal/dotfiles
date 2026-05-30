@@ -7,9 +7,12 @@
 # ─────────────────────────────────────────────────────────────
 #  Taps (extra repos)
 # ─────────────────────────────────────────────────────────────
+# homebrew/bundle and homebrew/services were merged into Homebrew
+# core in 2025 — no longer separate taps. Only add taps here for
+# truly third-party formulae.
 
-tap "homebrew/bundle"
-tap "homebrew/services"
+# Aerospace tiling window manager (third-party)
+tap "nikitabobko/tap"
 
 # ─────────────────────────────────────────────────────────────
 #  CLI tools
@@ -22,6 +25,7 @@ brew "git"
 brew "gh"
 brew "starship"
 brew "uv"
+brew "atuin"
 
 # Modern CLI replacements
 brew "fzf"
@@ -49,6 +53,7 @@ brew "openssh"
 brew "mtr"                  # better traceroute
 brew "nmap"                 # network scanner
 brew "iperf3"               # bandwidth test
+brew "sshpass"
 
 # Dev
 brew "node"                 # for occasional npm tools
@@ -74,7 +79,14 @@ cask "firefox"
 # Communication
 cask "zoom"
 cask "microsoft-teams"
-cask "microsoft-office"
+
+# M365
+#cask "microsoft-outlook"
+#cask "microsoft-teams"
+#cask "microsoft-word"
+#cask "microsoft-excel"
+#cask "microsoft-powerpoint"
+#cask "onedrive"
 
 # Productivity
 cask "1password"
@@ -85,8 +97,9 @@ cask "the-unarchiver"       # opens .rar, .7z, etc.
 cask "appcleaner"           # uninstall apps properly
 cask "maccy"                # clipboard manager
 cask "hazel"                # auto file processing
-cask "hazeover"             # window focus tool
 cask "logi-options+"        # mouse manager
+cask "obsidian"
+cask "cleanshot"
 
 
 # Development
@@ -95,11 +108,16 @@ cask "github"               # GitHub Desktop, sometimes handy
 cask "bruno"              # API testing (or use Bruno: cask "bruno")
 cask "tableplus"            # DB GUI — works with your SQLite + DB2 stuff
 cask "dbeaver-community"
+brew "duckdb"
+cask "orbstack"
+cask "tailscale-app"
+cask "cyberduck"
 
 # Remote / RDP / VNC
 cask "microsoft-remote-desktop"
 cask "royal-tsx"
 cask "vnc-viewer"            # for register VNC access
+cask "core-tunnel"
 
 # Media
 cask "vlc"
@@ -112,7 +130,8 @@ cask "font-cascadia-code-nf"
 # Utilities
 cask "stats"                # menu bar system stats
 cask "betterdisplay"        # control external monitor brightness from Mac
-cask "rectangle-pro"        # window management
+# cask "rectangle-pro"        # window management
+cask "nikitabobko/tap/aerospace"
 
 # ─────────────────────────────────────────────────────────────
 #  Mac App Store apps
@@ -128,6 +147,15 @@ mas "Peek", id: 1554235898
 mas "1Password for Safari ", id: 1569813296
 mas "Amphetamine", id: 937984704
 mas "Microsoft To Do", id: 1274495053
+mas "HazeOver", id: 430798174
+mas "Jump Desktop", id: 524141863
+mas "Keka", id: 470158793
+mas "Yesterday For Old Reddit", id: 1603279883
+mas "Dato", id: 1470584107
+mas "Folder Peek", id: 1615988943
+mas "Pixelmator Pro", id: 1289583905
+mas "Velja", id: 1607635845
+mas "Dropover", id: 1355679052
 
 # ─────────────────────────────────────────────────────────────
 #  uv-managed Python CLI tools

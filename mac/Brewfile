@@ -13,6 +13,7 @@
 
 # Aerospace tiling window manager (third-party)
 tap "nikitabobko/tap"
+tap "FelixKratz/formulae"
 
 # ─────────────────────────────────────────────────────────────
 #  CLI tools
@@ -132,6 +133,7 @@ cask "stats"                # menu bar system stats
 cask "betterdisplay"        # control external monitor brightness from Mac
 # cask "rectangle-pro"        # window management
 cask "nikitabobko/tap/aerospace"
+cask "FelixKratz/formulae/borders"
 
 # ─────────────────────────────────────────────────────────────
 #  Mac App Store apps

@@ -58,7 +58,8 @@ function gcm { git commit -m $args }
 function gb { git branch }
 
 # ---------- gh CLI shortcuts ----------
-function ghs { gh pr status }
+function ghsw { gh auth switch }
+function ghst { gh auth status }
 function ghl { gh pr list }
 function ghv { gh pr view --web }
 function ghc { gh pr create --fill --web }

@@ -13,7 +13,8 @@
         "100.114.72.45": "linux",
         "fedora-vm": "linux",
         "100.124.1.117": "macOS",
-        "outpost.tail9579a2.ts.net": "linux"
+        "outpost.tail9579a2.ts.net": "linux",
+        "jumpbox": "windows"
     },
     "editor.unicodeHighlight.nonBasicASCII": false,
     "security.workspace.trust.untrustedFiles": "open",

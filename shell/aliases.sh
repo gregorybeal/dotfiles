@@ -38,7 +38,8 @@ alias gca='git commit --amend'
 alias gb='git branch'
 
 # gh CLI shortcuts
-alias ghs='gh pr status'
+alias ghsw='gh auth switch'
+alias ghst='gh auth status'
 alias ghl='gh pr list'
 alias ghv='gh pr view --web'
 alias ghc='gh pr create --fill --web'

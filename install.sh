@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 # Bootstrap dotfiles on Mac or WSL.
 # Idempotent — safe to re-run.
+#
+# Tolerant of individual link failures: continues past errors and reports
+# them at the end. Set DEBUG=1 to see verbose output.
 
-set -e
+# Deliberately NOT using `set -e` — we want to continue past individual
+# link/chmod failures, not bail on the first one. Steps later in the
+# script must still run even if earlier ones had issues.
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 OS="$(uname -s)"
+LINK_ERRORS=()
 
 case "$OS" in
     Darwin) PLATFORM="mac" ;;
@@ -29,17 +35,31 @@ echo ""
 # --- helper: link a file, backing up any existing target ---
 link() {
     local src="$1" dst="$2"
+
+    if [ ! -e "$src" ]; then
+        echo "  [skip] source missing: $src"
+        LINK_ERRORS+=("missing source: $src")
+        return 1
+    fi
+
     if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
         echo "  [ok]   $dst (already linked)"
-        return
+        return 0
     fi
-    if [ -e "$dst" ]; then
+    if [ -e "$dst" ] || [ -L "$dst" ]; then
         echo "  [bak]  $dst -> $dst.backup"
-        mv "$dst" "$dst.backup"
+        if ! mv "$dst" "$dst.backup"; then
+            LINK_ERRORS+=("could not back up: $dst")
+            return 1
+        fi
     fi
     mkdir -p "$(dirname "$dst")"
-    ln -s "$src" "$dst"
-    echo "  [link] $dst"
+    if ln -s "$src" "$dst"; then
+        echo "  [link] $dst"
+    else
+        LINK_ERRORS+=("could not link: $dst")
+        return 1
+    fi
 }
 
 # --- shell ---
@@ -99,18 +119,22 @@ if [ ! -f "$SSH_SOURCE" ]; then
 fi
 echo "  Using $SSH_SOURCE"
 link "$SSH_SOURCE" "$HOME/.ssh/config"
-chmod 600 "$DOTFILES/ssh/config".* 2>/dev/null || true
+
+# Lock down permissions on SSH configs (best-effort; ignore failures)
+for cfg in "$DOTFILES"/ssh/config.*; do
+    [ -f "$cfg" ] && chmod 600 "$cfg" 2>/dev/null
+done
 
 # --- reg-tool ---
 echo "reg-tool:"
 mkdir -p "$HOME/.config/reg-tool"
 link "$DOTFILES/reg-tool/reg.sh"      "$HOME/.config/reg-tool/reg.sh"
 link "$DOTFILES/reg-tool/refresh.py"  "$HOME/.config/reg-tool/refresh.py"
-chmod +x "$DOTFILES/reg-tool/refresh.py"
+[ -f "$DOTFILES/reg-tool/refresh.py" ] && chmod +x "$DOTFILES/reg-tool/refresh.py" 2>/dev/null
 
 if [ ! -f "$HOME/.config/reg-tool/config" ]; then
-    cp "$DOTFILES/reg-tool/config.example" "$HOME/.config/reg-tool/config"
-    echo "  [new]  ~/.config/reg-tool/config (edit this to set jumpbox + paths)"
+    cp "$DOTFILES/reg-tool/config.example" "$HOME/.config/reg-tool/config" 2>/dev/null && \
+        echo "  [new]  ~/.config/reg-tool/config (edit this to set jumpbox + paths)"
 else
     echo "  [keep] ~/.config/reg-tool/config (already exists)"
 fi
@@ -141,8 +165,19 @@ fi
 chmod +x "$DOTFILES/scripts"/*.sh 2>/dev/null || true
 
 echo ""
-echo "Done. Next steps:"
+echo "Done."
+
+# Print summary of any link failures
+if [ ${#LINK_ERRORS[@]} -gt 0 ]; then
+    echo ""
+    echo "  ⚠ ${#LINK_ERRORS[@]} link(s) had issues:"
+    for err in "${LINK_ERRORS[@]}"; do
+        echo "      - $err"
+    done
+fi
+
 echo ""
+echo "Next steps:"
 echo "  1. Open a new shell (or: source ~/.zshrc)"
 echo "  2. Authenticate with GitHub:  gh auth login"
 echo "     (pick HTTPS, then 'Yes' to authenticate git)"

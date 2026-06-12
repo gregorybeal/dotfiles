@@ -74,3 +74,11 @@ alias myip='curl -s ifconfig.me; echo'
 alias ports='netstat -tulanp 2>/dev/null || ss -tulnp'
 alias dfh='df -h'
 alias duh='du -h --max-depth=1 2>/dev/null | sort -h'
+
+# Mac Global Protect
+alias gpstart='launchctl load /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
+alias gpstop='launchctl unload /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
+
+# SSH Tunnels
+alias socks-up='tmux new -d -s sock1080 "ssh -N -D 127.0.0.1:1080 gbeal@lassssgate01.traderjoes.com" && tmux new -d -s sock1081 "ssh -N -D 127.0.0.1:1081 greg@100.118.20.30"'
+alias socks-down='tmux kill-session -t sock1080 2>/dev/null; tmux kill-session -t sock1081 2>/dev/null'

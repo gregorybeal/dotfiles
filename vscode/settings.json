@@ -55,7 +55,7 @@
     "window.autoDetectColorScheme": true,
     "workbench.editorAssociations": {},
     "yaml.schemas": {
-        "file:///home/gbeal/.vscode-server/extensions/docsmsft.docs-yaml-1.0.6/dist/toc.schema.json": "/toc\\.yml/i"
+        "file:///Users/gbeal/.vscode/extensions/docsmsft.docs-yaml-1.0.6/dist/toc.schema.json": "/toc\\.yml/i"
     },
     "chat.commandCenter.enabled": false,
     "security.allowedUNCHosts": [

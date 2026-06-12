@@ -12,8 +12,7 @@
 # truly third-party formulae.
 
 # Aerospace tiling window manager (third-party)
-tap "nikitabobko/tap"
-tap "FelixKratz/formulae"
+tap "Sanyam-G/switch"
 
 # ─────────────────────────────────────────────────────────────
 #  CLI tools
@@ -82,18 +81,19 @@ cask "zoom"
 cask "microsoft-teams"
 
 # M365
-#cask "microsoft-outlook"
-#cask "microsoft-teams"
-#cask "microsoft-word"
-#cask "microsoft-excel"
-#cask "microsoft-powerpoint"
-#cask "onedrive"
+cask "microsoft-outlook"
+cask "microsoft-teams"
+cask "microsoft-word"
+cask "microsoft-excel"
+cask "microsoft-powerpoint"
+cask "onedrive"
+cask "microsoft-365-copilot"  # AI assistant for M365 apps
 
 # Productivity
 cask "1password"
 cask "1password-cli"        # for SSH agent + scripting
-cask "raycast"              # Spotlight replacement — highly recommended
-cask "alt-tab"              # better cmd-tab (per-window, not per-app)
+cask "alfred"              # Spotlight replacement — highly recommended
+cask "Sanyam-G/switch/switch"              # better cmd-tab (per-window, not per-app)
 cask "the-unarchiver"       # opens .rar, .7z, etc.
 cask "appcleaner"           # uninstall apps properly
 cask "maccy"                # clipboard manager
@@ -101,13 +101,13 @@ cask "hazel"                # auto file processing
 cask "logi-options+"        # mouse manager
 cask "obsidian"
 cask "cleanshot"
+cask "moom"                 # window manager
 
 
 # Development
 cask "visual-studio-code"
 cask "github"               # GitHub Desktop, sometimes handy
-cask "bruno"              # API testing (or use Bruno: cask "bruno")
-cask "tableplus"            # DB GUI — works with your SQLite + DB2 stuff
+cask "postman"              # API testing (or use Bruno: cask "bruno")
 cask "dbeaver-community"
 brew "duckdb"
 cask "orbstack"
@@ -115,13 +115,13 @@ cask "tailscale-app"
 cask "cyberduck"
 
 # Remote / RDP / VNC
-cask "microsoft-remote-desktop"
+cask "windows-app" # Microsoft Remote Desktop, for RDP access to Windows machines 
 cask "royal-tsx"
 cask "vnc-viewer"            # for register VNC access
 cask "core-tunnel"
 
 # Media
-cask "vlc"
+cask "iina"
 
 # Fonts (Nerd Fonts for terminal)
 cask "font-fira-code-nerd-font"
@@ -131,9 +131,8 @@ cask "font-cascadia-code-nf"
 # Utilities
 cask "stats"                # menu bar system stats
 cask "betterdisplay"        # control external monitor brightness from Mac
-# cask "rectangle-pro"        # window management
-cask "nikitabobko/tap/aerospace"
-cask "FelixKratz/formulae/borders"
+cask "autodesk-fusion"   # 3D modeling (free for personal use)
+cask "hyperkey"              # remap caps lock to hyper key (ctrl+alt+cmd)
 
 # ─────────────────────────────────────────────────────────────
 #  Mac App Store apps

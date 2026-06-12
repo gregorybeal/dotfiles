@@ -39,7 +39,8 @@ font-thicken = true
 # Auto-switch between light and dark Solarized based on macOS system
 # appearance. Format: theme = light:<name>,dark:<name>
 # When your Mac switches to dark mode (or via schedule), Ghostty follows.
-theme = light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark
+# theme = light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha
 
 # ── Alternate themes ──────────────────────────────────────────
 # To use one instead of the auto-switching above, comment out the
@@ -132,7 +133,7 @@ unfocused-split-opacity = 0.85
 shell-integration = detect
 
 # Include SSH terminfo + cwd reporting features
-shell-integration-features = cursor,sudo,title
+shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo
 
 # ───────────────────────────────────────────────────────────────
 #  macOS specifics

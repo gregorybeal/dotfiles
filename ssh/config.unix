@@ -3,24 +3,13 @@
 # This config covers your jump box + registers.
 
 # Defaults for everything
-  Host lasstrlinux01
-    HostName lasstrlinux01
-    User gbeal
-
 Host *
     ServerAliveInterval 60
     ServerAliveCountMax 3
     ControlMaster auto
     ControlPath ~/.ssh/sockets/%r@%h-%p
     ControlPersist 600
-
-
-# macOS only: store SSH key passphrases in the Keychain so you only
-# type them once (then they unlock automatically with your login).
-# The Match block runs the test and silently no-ops on Linux/WSL.
-Match host * exec "uname -s | grep -q Darwin"
-    UseKeychain yes
-
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 # Jump box
 Host jumpbox
@@ -66,3 +55,7 @@ Host fedora-vm
 Host outpost.tail9579a2.ts.net
   User root
   HostName outpost.tail9579a2.ts.net
+
+  Host 100.118.20.30
+    HostName 100.118.20.30
+    User greg

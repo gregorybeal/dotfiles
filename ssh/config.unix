@@ -3,6 +3,10 @@
 # This config covers your jump box + registers.
 
 # Defaults for everything
+# >>> gen_ssh_registers include >>>
+Include conf.d/registers
+# <<< gen_ssh_registers include <<<
+
 Host *
     ServerAliveInterval 60
     ServerAliveCountMax 3
@@ -15,6 +19,7 @@ Host *
 Host jumpbox
     HostName lassssgate01.traderjoes.com
     User gbeal
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 
 # Socks proxy
@@ -56,6 +61,7 @@ Host outpost.tail9579a2.ts.net
   User root
   HostName outpost.tail9579a2.ts.net
 
-  Host 100.118.20.30
-    HostName 100.118.20.30
-    User greg
+Host macmini
+  HostName 100.118.20.30
+  User greg
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"

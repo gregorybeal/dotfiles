@@ -133,7 +133,7 @@ unfocused-split-opacity = 0.85
 shell-integration = detect
 
 # Include SSH terminfo + cwd reporting features
-shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo
+shell-integration-features = cursor,sudo,title
 
 # ───────────────────────────────────────────────────────────────
 #  macOS specifics

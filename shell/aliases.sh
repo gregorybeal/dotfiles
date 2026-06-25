@@ -82,3 +82,7 @@ alias gpstop='launchctl unload /Library/LaunchAgents/com.paloaltonetworks.gp.pan
 # SSH Tunnels
 alias socks-up='tmux new -d -s sock1080 "ssh -N -D 127.0.0.1:1080 gbeal@lassssgate01.traderjoes.com" && tmux new -d -s sock1081 "ssh -N -D 127.0.0.1:1081 greg@100.118.20.30"'
 alias socks-down='tmux kill-session -t sock1080 2>/dev/null; tmux kill-session -t sock1081 2>/dev/null'
+
+# Tools
+alias hdm='uv run --directory /Users/gbeal/Tools/HDMenu Menu.py'
+alias cdid='uv run --project /Users/gbeal/Tools/Analysis /Users/gbeal/Tools/Analysis/loyalty_lookup.py'

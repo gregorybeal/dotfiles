@@ -47,6 +47,14 @@ fi
 if [ -f "$SCRIPT_DIR/.chezmoi.toml.tmpl" ]; then
     echo "Applying dotfiles from $SCRIPT_DIR..."
     chezmoi init --source "$SCRIPT_DIR" --apply
+    # Symlink the default chezmoi source dir to this repo so that future
+    # `chezmoi apply` / `chezmoi diff` / `chezmoi doctor` work without --source.
+    CHEZMOI_DEFAULT="$HOME/.local/share/chezmoi"
+    if [ ! -e "$CHEZMOI_DEFAULT" ]; then
+        mkdir -p "$(dirname "$CHEZMOI_DEFAULT")"
+        ln -sf "$SCRIPT_DIR" "$CHEZMOI_DEFAULT"
+        echo "Linked ~/.local/share/chezmoi -> $SCRIPT_DIR"
+    fi
 else
     echo "Cloning and applying dotfiles from $REPO..."
     chezmoi init --apply "$REPO"

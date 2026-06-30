@@ -362,3 +362,50 @@ else
     # eval/source/. command, register function for later
     compdef _jiratui_completion jiratui
 fi
+
+
+# ───────────────────────── arun completion (zsh) ─────────────────────────
+export ARUN_HOME="$HOME/personal"      # repo location (used to find playbooks)
+
+_arun_playbooks() {
+  local -a pbs
+  pbs=( $ARUN_HOME/playbooks/*.yml(N:t) $ARUN_HOME/playbooks/*.yaml(N:t) )  # N=ok if none, :t=basename
+  _describe -t playbooks 'playbook' pbs
+}
+_arun() {
+  local -a subcmds selflags
+  subcmds=(
+    'run:run a playbook against selected hosts'
+    'adhoc:run an ad-hoc ansible module'
+    'hosts:preview which hosts a selection matches'
+    'playbooks:list playbooks and their destructive flag'
+  )
+  selflags=(
+    '*--host[register hostname]:hostname:' '*--store[store number]:store:'
+    '*--store-file[store numbers from a file]:file:_files'
+    '*--host-file[hostnames from a file]:file:_files'
+    '*--targets[mixed store/register list file]:file:_files'
+    '*--state[store_state, e.g. CA]:state:' '*--tz[store_timezone, e.g. Pacific]:tz:'
+    '*--env[environment]:env:' '*--filter[narrow by COL=VAL]:filter:'
+    '--reachable[only reachable hosts]' '--all[target every host]'
+    '--ini[use static inventory.ini]' '--limit[ansible --limit pattern]:pattern:'
+  )
+  _arguments -C '1: :->cmd' '*:: :->args' && return
+  case $state in
+    cmd) _describe -t commands 'arun command' subcmds ;;
+    args)
+      case $words[1] in
+        run)   _arguments '1:playbook:_arun_playbooks' $selflags \
+                 '--check[dry run]' '--yes[skip confirmations]' \
+                 '(-e --extra-vars)'{-e,--extra-vars}'[KEY=VAL]:keyval:' \
+                 '(-u --user)'{-u,--user}'[remote SSH user]:user:' ;;
+        adhoc) _arguments $selflags \
+                 '(-m --module)'{-m,--module}'[module (default ping)]:module:' \
+                 '(-a --module-args)'{-a,--module-args}'[module args]:args:' \
+                 '--yes[skip confirmations]' '(-u --user)'{-u,--user}'[SSH user]:user:' ;;
+        hosts) _arguments $selflags '--show[columns to display]:columns:' ;;
+      esac ;;
+  esac
+}
+compdef _arun arun
+# ──────────────────────────────────────────────────────────────────────────

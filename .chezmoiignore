@@ -1,0 +1,17 @@
+# Platform-specific run scripts — only run the right variant per OS
+{{- if eq .chezmoi.os "windows" }}
+run_always_deploy-vscode.sh.tmpl
+run_once_init-reg-tool-config.sh.tmpl
+{{- else }}
+run_always_deploy-vscode.ps1.tmpl
+run_once_init-reg-tool-config.ps1.tmpl
+{{- end }}
+
+# PowerShell profile target path differs by OS
+# Mac/Linux: ~/.config/powershell/  Windows: ~/Documents/PowerShell/
+{{- if ne .chezmoi.os "windows" }}
+Documents/
+{{- end }}
+{{- if eq .chezmoi.os "windows" }}
+dot_config/powershell/
+{{- end }}

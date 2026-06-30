@@ -25,4 +25,8 @@ desktop.ini
 *.swp
 *.swo
 .vscode/
+
+# chezmoi state (local machine config — not shared)
+.chezmoi.toml
+chezmoi.toml
 ssh/registers

@@ -15,21 +15,21 @@ help:  ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 
-.PHONY: install
-install:  ## Link configs to ~/ (interactive: asks about SSH variant)
-	@./install.sh
+.PHONY: apply
+apply:  ## Apply dotfiles with chezmoi (idempotent)
+	@chezmoi apply
 
-.PHONY: install-minimal
-install-minimal:  ## Link configs using minimal SSH variant (no jump box)
-	@DOTFILES_SSH_VARIANT=minimal ./install.sh
+.PHONY: diff
+diff:  ## Show what chezmoi would change without applying
+	@chezmoi diff
+
+.PHONY: edit
+edit:  ## Open a dotfile in your editor (e.g. make edit FILE=~/.zshrc)
+	@chezmoi edit $(FILE)
 
 .PHONY: bootstrap
-bootstrap:  ## Full setup on new machine (installs tools + links configs)
-ifeq ($(OS),Darwin)
+bootstrap:  ## Full setup on new machine (installs chezmoi + applies dotfiles)
 	@./bootstrap.sh
-else
-	@./bootstrap.sh
-endif
 
 .PHONY: bootstrap-nosudo
 bootstrap-nosudo:  ## Full setup on restricted Linux box (no sudo)
@@ -94,13 +94,12 @@ doctor:  ## Health check the dotfiles setup
 	@./scripts/doctor.sh
 
 .PHONY: update
-update:  ## Pull latest from git and re-link
-	@git pull
-	@./install.sh
+update:  ## Pull latest changes and re-apply dotfiles
+	@chezmoi update
 
 .PHONY: reg-refresh
 reg-refresh:  ## Refresh register inventory CSV from SQLite
-	@uv run reg-tool/refresh.py
+	@uv run ~/.config/reg-tool/refresh.py
 
 .PHONY: vscode-ext
 vscode-ext:  ## Install all VS Code extensions

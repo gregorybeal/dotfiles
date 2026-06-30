@@ -1,7 +1,10 @@
 #!/bin/bash
 # Deploy VS Code settings, keybindings, and snippets to the platform-specific user dir.
 # Runs on every chezmoi apply — fast since it's just file copies.
-
+# Windows: run vscode/deploy.ps1 manually (or use Git Bash — this script also works there).
+{{ if eq .chezmoi.os "windows" -}}
+exit 0
+{{ end -}}
 {{ if eq .chezmoi.os "darwin" -}}
 VSCODE_USER="$HOME/Library/Application Support/Code/User"
 {{ else -}}

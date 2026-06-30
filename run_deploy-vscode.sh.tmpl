@@ -17,9 +17,9 @@ SRC="{{ .chezmoi.sourceDir }}/vscode"
 mkdir -p "$VSCODE_USER/snippets"
 
 for f in settings.json keybindings.json; do
-    [ -f "$SRC/$f" ] && cp "$SRC/$f" "$VSCODE_USER/$f"
+    [ -f "$SRC/$f" ] && cp "$SRC/$f" "$VSCODE_USER/$f" 2>/dev/null || true
 done
 
 for snippet in "$SRC/snippets/"*.json; do
-    [ -f "$snippet" ] && cp "$snippet" "$VSCODE_USER/snippets/$(basename "$snippet")"
+    [ -f "$snippet" ] && cp "$snippet" "$VSCODE_USER/snippets/$(basename "$snippet")" 2>/dev/null || true
 done

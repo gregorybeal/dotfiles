@@ -1,0 +1,10 @@
+#!/bin/bash
+# One-time: copy reg-tool config.example to ~/.config/reg-tool/config if not present.
+CONFIG_DIR="$HOME/.config/reg-tool"
+CONFIG="$CONFIG_DIR/config"
+mkdir -p "$CONFIG_DIR"
+if [ ! -f "$CONFIG" ]; then
+    cp "{{ .chezmoi.sourceDir }}/reg-tool/config.example" "$CONFIG"
+    chmod 600 "$CONFIG"
+    echo "[reg-tool] Created $CONFIG — edit it to set your jumpbox and SQLite paths."
+fi

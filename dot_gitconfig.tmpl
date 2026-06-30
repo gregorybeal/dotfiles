@@ -4,12 +4,6 @@
     email = {{ .gitEmail }}
 {{- if .gitSigningKey }}
     signingkey = {{ .gitSigningKey }}
-
-[gpg]
-    format = ssh
-
-[commit]
-    gpgsign = true
 {{- end }}
 
 [init]

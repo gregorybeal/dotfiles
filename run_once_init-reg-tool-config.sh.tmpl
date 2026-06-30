@@ -1,5 +1,7 @@
 #!/bin/bash
 # One-time: copy reg-tool config.example to ~/.config/reg-tool/config if not present.
+# Windows: run reg-tool/init-config.ps1 manually instead.
+{{ if eq .chezmoi.os "windows" }}exit 0{{ end }}
 CONFIG_DIR="$HOME/.config/reg-tool"
 CONFIG="$CONFIG_DIR/config"
 mkdir -p "$CONFIG_DIR"

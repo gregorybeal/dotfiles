@@ -1,0 +1,22 @@
+#!/bin/bash
+# Deploy VS Code settings, keybindings, and snippets to the platform-specific user dir.
+# Runs on every chezmoi apply — fast since it's just file copies.
+
+{{ if eq .chezmoi.os "darwin" -}}
+VSCODE_USER="$HOME/Library/Application Support/Code/User"
+{{ else -}}
+VSCODE_USER="$HOME/.config/Code/User"
+{{ end -}}
+
+SRC="{{ .chezmoi.sourceDir }}/vscode"
+[ -d "$SRC" ] || exit 0
+
+mkdir -p "$VSCODE_USER/snippets"
+
+for f in settings.json keybindings.json; do
+    [ -f "$SRC/$f" ] && cp "$SRC/$f" "$VSCODE_USER/$f"
+done
+
+for snippet in "$SRC/snippets/"*.json; do
+    [ -f "$snippet" ] && cp "$snippet" "$VSCODE_USER/snippets/$(basename "$snippet")"
+done

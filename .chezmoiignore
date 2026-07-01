@@ -1,3 +1,31 @@
+# ── Repo-management files — not for deployment to home dir ──────────────────
+README.md
+Makefile
+bootstrap.sh
+bootstrap.ps1
+bootstrap-nosudo.sh
+
+# ── Repo-management directories ──────────────────────────────────────────────
+docs/
+linux/
+mac/
+scripts/
+windows-terminal/
+
+# ── Symlink source directories ───────────────────────────────────────────────
+# These live in the repo so chezmoi can point symlinks at them.
+# The actual deployment happens via dot_config/*/symlink_* files — not here.
+1Password/
+atuin/
+btop/
+karabiner/
+keyboardcowboy/
+reg-tool/
+
+# ── VSCode — deployed by run_deploy-vscode.sh.tmpl, not by chezmoi directly ─
+vscode/
+
+# ── Windows-only: Documents/ folder (PS profile copied by bootstrap.ps1) ────
 {{- if ne .chezmoi.os "windows" }}
 Documents/
 {{- end }}

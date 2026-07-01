@@ -71,6 +71,16 @@ if [ "$PLATFORM" = "mac" ]; then
     fi
 fi
 
+# --- Linux: install packages ---
+if [ "$PLATFORM" = "linux" ]; then
+    LINUX_PACKAGES="$SCRIPT_DIR/linux/packages.sh"
+    if [ -f "$LINUX_PACKAGES" ]; then
+        echo ""
+        echo "Installing Linux packages..."
+        bash "$LINUX_PACKAGES" || echo "linux/packages.sh hit some errors — run 'make linux-packages' to retry."
+    fi
+fi
+
 echo ""
 echo "Done! Next steps:"
 echo "  1. Restart your shell (or: source ~/.zshrc)"

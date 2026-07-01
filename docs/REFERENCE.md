@@ -90,6 +90,7 @@ make bootstrap         # full setup on new machine (Mac/Linux)
 make bootstrap-nosudo  # full setup on restricted Linux box
 make doctor            # health check the setup
 make brew              # install everything from Brewfile (Mac)
+make linux-packages    # install packages on Ubuntu/Debian (Linux)
 make brew-check        # show what's in Brewfile but not installed (Mac)
 make brew-cleanup      # show brew packages not in Brewfile (dry-run)
 make macos-defaults    # apply macOS preferences (Mac)

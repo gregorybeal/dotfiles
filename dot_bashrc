@@ -1,4 +1,4 @@
-# ~/.bashrc — managed by chezmoi
+# ~/.bashrc — managed by chezmoi (edit directly, no template syntax needed)
 # Lightweight: only the essentials, since bash often runs on remote/restricted hosts
 
 # ---------- History ----------
@@ -10,9 +10,7 @@ shopt -s checkwinsize
 shopt -s globstar
 
 # ---------- PATH additions ----------
-{{ if eq .chezmoi.os "darwin" -}}
-[[ -d /opt/homebrew/bin ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
-{{ end -}}
+[[ "$(uname -s)" == "Darwin" ]] && [[ -d /opt/homebrew/bin ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
 [ -d "$HOME/.fzf/bin" ] && export PATH="$HOME/.fzf/bin:$PATH"

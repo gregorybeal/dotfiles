@@ -1,8 +1,3 @@
-# PowerShell profile target path differs by OS
-# Mac/Linux: ~/.config/powershell/  Windows: ~/Documents/PowerShell/
 {{- if ne .chezmoi.os "windows" }}
 Documents/
-{{- end }}
-{{- if eq .chezmoi.os "windows" }}
-.config/powershell/
 {{- end }}

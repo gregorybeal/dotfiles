@@ -31,6 +31,15 @@ if (Test-Path "$Dotfiles\.chezmoi.toml.tmpl") {
     chezmoi init --apply $Repo
 }
 
+# --- Copy PowerShell profile to the Windows Documents path ($PROFILE) ---
+$PsProfileSrc = "$env:USERPROFILE\.config\powershell\Microsoft.PowerShell_profile.ps1"
+$PsProfileDst = "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
+if (Test-Path $PsProfileSrc) {
+    $null = New-Item -ItemType Directory -Force -Path (Split-Path $PsProfileDst)
+    Copy-Item -Force $PsProfileSrc $PsProfileDst
+    Write-Host "PowerShell profile copied to $PsProfileDst"
+}
+
 Write-Host ""
 Write-Host "Done! Next steps:" -ForegroundColor Green
 Write-Host "  1. Restart PowerShell"

@@ -37,17 +37,23 @@ make doctor          # verify everything's healthy
 
 ```bash
 make help          # show all targets
-make apply         # re-apply dotfiles (chezmoi apply)
-make diff          # preview what would change
+chezmoi apply      # re-apply dotfiles
+chezmoi diff       # preview what would change
 make update        # pull latest + re-apply (chezmoi update)
 make doctor        # health check
 make brew          # update Mac apps from Brewfile
 ```
 
-**Edit a managed dotfile:**
+**Edit a managed dotfile directly** (zshrc, bashrc, aliases — plain files):
 ```bash
-chezmoi edit ~/.zshrc      # opens source file in $EDITOR
-chezmoi apply              # deploy the edit
+$EDITOR ~/.local/share/chezmoi/dot_zshrc   # edit the source file
+chezmoi apply                               # deploy the edit
+```
+
+**Or use chezmoi's editor wrapper:**
+```bash
+chezmoi edit ~/.zshrc    # opens source file in $EDITOR
+chezmoi apply            # deploy the edit
 ```
 
 ## First-time prompts
@@ -121,5 +127,6 @@ These files are gitignored and sourced automatically:
 
 ## Full docs
 
+- **[docs/QUICKSTART.md](docs/QUICKSTART.md)** — exact commands for new machine setup (Mac, Linux, Windows)
 - **[docs/SETUP.md](docs/SETUP.md)** — first-time setup walkthrough, gh auth, multi-account, machine-specific overrides
 - **[docs/REFERENCE.md](docs/REFERENCE.md)** — what gets installed, per-OS notes, gh CLI cheatsheet, reg-tool reference, troubleshooting

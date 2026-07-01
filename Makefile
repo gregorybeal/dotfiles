@@ -15,18 +15,6 @@ help:  ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 
-.PHONY: apply
-apply:  ## Apply dotfiles with chezmoi (idempotent)
-	@chezmoi apply
-
-.PHONY: diff
-diff:  ## Show what chezmoi would change without applying
-	@chezmoi diff
-
-.PHONY: edit
-edit:  ## Open a dotfile in your editor (e.g. make edit FILE=~/.zshrc)
-	@chezmoi edit $(FILE)
-
 .PHONY: bootstrap
 bootstrap:  ## Full setup on new machine (installs chezmoi + applies dotfiles)
 	@./bootstrap.sh

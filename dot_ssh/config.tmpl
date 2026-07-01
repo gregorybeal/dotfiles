@@ -28,11 +28,8 @@ Host 172.20.* 172.22.* 172.23.* 172.31.*
     LogLevel Error
 
 # Individual hosts
-Host 100.124.1.117
-    HostName 100.124.1.117
-    User gbeal
 
-Host lasstrlinux01
+Host lnx
     HostName lasstrlinux01
     User gbeal
 
@@ -41,9 +38,13 @@ Host fedora-vm
     HostName 100.114.72.45
     User greg
 
-Host outpost.tail9579a2.ts.net
-    User root
-    HostName outpost.tail9579a2.ts.net
+Host outpost
+    HostName 100.114.127.126
+    User greg
+
+Host pachaco
+    HostName 100.73.120.110
+    User greg
 
 {{ else if eq .sshVariant "minimal" -}}
 # ~/.ssh/config — minimal (no jump box / no registers)

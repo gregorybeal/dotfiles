@@ -77,16 +77,26 @@ dotfiles/
 │   └── config.tmpl             → ~/.ssh/config  (variant selected at init)
 │
 ├── dot_config/
-│   ├── starship/starship.toml  → ~/.config/starship/starship.toml
+│   ├── starship.toml           → ~/.config/starship.toml
 │   ├── ghostty/config          → ~/.config/ghostty/config
 │   ├── powershell/             → ~/.config/powershell/$PROFILE  (Mac/Linux)
-│   └── reg-tool/               → ~/.config/reg-tool/ (reg.sh, refresh.py)
+│   ├── reg-tool/               → ~/.config/reg-tool/ (reg.sh, refresh.py)
+│   ├── 1Password/ssh/          → ~/.config/1Password/ssh/agent.toml  (symlink)
+│   ├── atuin/                  → ~/.config/atuin/config.toml  (symlink)
+│   ├── btop/                   → ~/.config/btop/btop.conf  (symlink)
+│   ├── karabiner/              → ~/.config/karabiner/karabiner.json  (symlink)
+│   └── keyboardcowboy/         → ~/.config/keyboardcowboy/config.json  (symlink)
 │
 ├── Documents/PowerShell/       → ~/Documents/PowerShell/$PROFILE (Windows only)
 │
-├── run_always_deploy-vscode.*  copies vscode/ settings to platform path on apply
+├── run_deploy-vscode.sh.tmpl   copies vscode/ settings to platform path on apply
 ├── run_once_init-reg-tool-config.*  creates ~/.config/reg-tool/config on first run
 │
+├── 1Password/                  agent.toml (symlink source — GUI-written)
+├── atuin/                      config.toml (symlink source — GUI-written)
+├── btop/                       btop.conf (symlink source — GUI-written)
+├── karabiner/                  karabiner.json (symlink source — GUI-written)
+├── keyboardcowboy/             config.json (symlink source — GUI-written)
 ├── vscode/                     settings.json, keybindings.json, snippets/
 ├── windows-terminal/           settings.json (deployed via run script on Windows)
 ├── mac/                        Brewfile + macos-defaults.sh

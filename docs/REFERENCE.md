@@ -36,23 +36,28 @@ What this repo installs, where things get linked, and how to use the toolkit.
 - Oh My Zsh + zsh-autosuggestions + zsh-syntax-highlighting
 - TPM (tmux plugin manager)
 
-## What gets linked
+## What gets deployed
 
-| File               | Mac path                                     | WSL/Linux path           | Windows path                                  |
-| ------------------ | -------------------------------------------- | ------------------------ | --------------------------------------------- |
-| `.zshrc`         | `~/.zshrc`                                 | `~/.zshrc`             | —                                            |
-| `.bashrc`        | `~/.bashrc`                                | `~/.bashrc`            | —                                            |
-| `aliases.sh`     | `~/.aliases.sh`                            | `~/.aliases.sh`        | —                                            |
-| `.tmux.conf`     | `~/.tmux.conf`                             | `~/.tmux.conf`         | `%USERPROFILE%\.tmux.conf`                  |
-| Starship           | `~/.config/starship.toml`                  | (same)                   | `%USERPROFILE%\.config\starship.toml`       |
-| `.gitconfig`     | `~/.gitconfig`                             | (same)                   | `%USERPROFILE%\.gitconfig`                  |
-| SSH config         | `~/.ssh/config` (unix)                     | `~/.ssh/config` (unix) | `%USERPROFILE%\.ssh\config` (windows)       |
-| Ghostty            | `~/.config/ghostty/config`                 | (same)                   | —                                            |
-| PowerShell profile | —                                           | —                       | `$PROFILE`                                  |
-| VS Code settings   | `~/Library/Application Support/Code/User/` | `~/.config/Code/User/` | `%APPDATA%\Code\User\`                      |
-| VS Code snippets   | (same dir as settings)                       | (same)                   | (same)                                        |
-| Windows Terminal   | —                                           | —                       | `%LOCALAPPDATA%\Packages\...\settings.json` |
-| reg-tool           | `~/.config/reg-tool/`                      | (same)                   | `%USERPROFILE%\.config\reg-tool\`           |
+Managed by chezmoi (`chezmoi apply`). Templated files (`.tmpl`) are rendered at apply time; symlinked files (`symlink_`) point back into the repo so GUI apps write directly to the source.
+
+| File                        | Mac path                                     | WSL/Linux path           | Windows path                                  |
+| --------------------------- | -------------------------------------------- | ------------------------ | --------------------------------------------- |
+| `.zshrc`                  | `~/.zshrc`                                 | `~/.zshrc`             | —                                            |
+| `.bashrc`                 | `~/.bashrc`                                | `~/.bashrc`            | —                                            |
+| `aliases.sh`              | `~/.aliases.sh`                            | `~/.aliases.sh`        | —                                            |
+| `.tmux.conf`              | `~/.tmux.conf`                             | `~/.tmux.conf`         | `%USERPROFILE%\.tmux.conf`                  |
+| Starship                    | `~/.config/starship.toml`                  | (same)                   | `%USERPROFILE%\.config\starship.toml`       |
+| `.gitconfig`              | `~/.gitconfig`                             | (same)                   | `%USERPROFILE%\.gitconfig`                  |
+| SSH config                  | `~/.ssh/config` (unix)                     | `~/.ssh/config` (unix) | `%USERPROFILE%\.ssh\config` (windows)       |
+| Ghostty                     | `~/.config/ghostty/config`                 | (same)                   | —                                            |
+| PowerShell profile          | —                                           | —                       | `$PROFILE`                                  |
+| VS Code settings            | `~/Library/Application Support/Code/User/` | `~/.config/Code/User/` | `%APPDATA%\Code\User\`                      |
+| reg-tool                    | `~/.config/reg-tool/`                      | (same)                   | `%USERPROFILE%\.config\reg-tool\`           |
+| 1Password agent *(symlink)* | `~/.config/1Password/ssh/agent.toml`       | —                       | —                                            |
+| Karabiner *(symlink)*       | `~/.config/karabiner/karabiner.json`       | —                       | —                                            |
+| Keyboard Cowboy *(symlink)* | `~/.config/keyboardcowboy/config.json`     | —                       | —                                            |
+| atuin *(symlink)*           | `~/.config/atuin/config.toml`              | (same)                   | —                                            |
+| btop *(symlink)*            | `~/.config/btop/btop.conf`                 | (same)                   | —                                            |
 
 ## What is NOT in this repo
 
@@ -79,16 +84,17 @@ What this repo installs, where things get linked, and how to use the toolkit.
 
 ```bash
 make help              # show all targets
-make install           # link configs (interactive — asks SSH variant)
-make install-minimal   # link configs with minimal SSH variant
+make apply             # deploy dotfiles (chezmoi apply)
+make diff              # preview what would change before applying
 make bootstrap         # full setup on new machine (Mac/Linux)
 make bootstrap-nosudo  # full setup on restricted Linux box
 make doctor            # health check the setup
 make brew              # install everything from Brewfile (Mac)
+make linux-packages    # install packages on Ubuntu/Debian (Linux)
 make brew-check        # show what's in Brewfile but not installed (Mac)
 make brew-cleanup      # show brew packages not in Brewfile (dry-run)
 make macos-defaults    # apply macOS preferences (Mac)
-make update            # git pull + relink
+make update            # git pull + re-apply (chezmoi update)
 make reg-refresh       # rebuild register inventory
 make vscode-ext        # install all VS Code extensions
 ```
@@ -156,12 +162,14 @@ git remote set-url origin https://github.com/gregorybeal/dotfiles.git
 gh auth setup-git
 ```
 
-**`getsockname failed: Not a socket`** — ControlMaster enabled on Windows. Re-run `install.ps1` and pick the Windows variant.
+**`getsockname failed: Not a socket`** — ControlMaster enabled on Windows. Set `sshVariant = "windows"` in `~/.config/chezmoi/chezmoi.toml` and re-run `chezmoi apply`.
 
 **Oh My Zsh prompt has missing symbols/icons** — install a Nerd Font and set it as your terminal font.
 
-**`reg` command not found** — your shell didn't source `reg-tool/reg.sh`. Check `~/.zshrc` is the symlinked one (`ls -la ~/.zshrc`).
+**`reg` command not found** — your shell didn't source `reg-tool/reg.sh`. Check that `~/.config/reg-tool/reg.sh` exists and that your `.zshrc` is applied (`chezmoi apply`).
 
-**Windows `install.ps1` says "symlink creation requires admin"** — run PowerShell as administrator, OR enable Developer Mode (Settings → Privacy & security → For developers → Developer Mode).
+**Windows `bootstrap.ps1` says "symlink creation requires admin"** — run PowerShell as administrator, OR enable Developer Mode (Settings → Privacy & security → For developers → Developer Mode).
 
 **VS Code extensions didn't install** — `code` CLI wasn't in PATH yet because VS Code was just installed. Close + reopen shell, then `make vscode-ext`.
+
+**`chezmoi apply` errors on jiratui config** — 1Password isn't signed in or `op` CLI isn't available. All other files still apply fine; run `chezmoi apply` again after signing in to 1Password.

@@ -35,6 +35,10 @@ bootstrap:  ## Full setup on new machine (installs chezmoi + applies dotfiles)
 bootstrap-nosudo:  ## Full setup on restricted Linux box (no sudo)
 	@./bootstrap-nosudo.sh
 
+.PHONY: linux-packages
+linux-packages:  ## Install Linux packages — Ubuntu/Debian with sudo (idempotent)
+	@./linux/packages.sh
+
 .PHONY: brew
 brew:  ## Install/update all Mac apps from Brewfile (Mac only — continues past failures)
 ifeq ($(OS),Darwin)

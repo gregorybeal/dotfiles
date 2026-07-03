@@ -142,6 +142,18 @@ else
     info "zinit not installed yet (self-installs on first zsh launch)"
 fi
 
+if [ -d "$HOME/.local/state/zsh" ]; then
+    ok "~/.local/state/zsh exists (zsh history)"
+else
+    warn "~/.local/state/zsh missing — HISTFILE can't be written. Run: make dirs"
+fi
+
+if [ -d "$HOME/.cache/zsh" ]; then
+    ok "~/.cache/zsh exists (completion cache)"
+else
+    warn "~/.cache/zsh missing — compinit dump can't be cached. Run: make dirs"
+fi
+
 # ─────────────────────────────────────────────────────────────
 section "SSH"
 # ─────────────────────────────────────────────────────────────
@@ -149,7 +161,7 @@ section "SSH"
 if [ -d "$HOME/.ssh/sockets" ]; then
     ok "~/.ssh/sockets directory exists (ControlMaster)"
 else
-    info "~/.ssh/sockets missing (only needed if ControlMaster enabled)"
+    warn "~/.ssh/sockets missing — ControlMaster is enabled in ssh/.ssh/config and needs this. Run: make dirs"
 fi
 
 if [ -f "$HOME/.ssh/id_ed25519" ] || [ -f "$HOME/.ssh/id_rsa" ]; then

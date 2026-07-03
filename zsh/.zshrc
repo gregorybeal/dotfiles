@@ -77,7 +77,12 @@ source "$HOME/.zsh/fzf.zsh"
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
 source "$HOME/.zsh/bindings.zsh"
 source "$HOME/.zsh/plugins.zsh"
-source "$HOME/.zsh/prompt.zsh"
+
+# ---------- Prompt ----------
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+FUNCNEST=100
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
 source "$HOME/.zsh/local-tools.zsh"
 
 # =========================================================

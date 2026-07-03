@@ -39,6 +39,8 @@ $EDITOR ~/.tmux.conf   # or ~/.gitconfig, ~/.config/starship.toml, etc.
 
 Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `stow <package>` (run from this directory) symlinks everything inside `<package>/` into the matching path under `$HOME`. For example, `zsh/.config/zsh/.zshrc` becomes a symlink at `~/.config/zsh/.zshrc`. Everything you see under `~/.config/...` for a stowed tool is a symlink pointing back into this repo — edit it in place, `git commit`, done.
 
+**Adopting an existing machine:** Stow refuses to symlink over a real (non-symlink) file that's already there — and it's all-or-nothing per invocation, so *one* conflict (e.g. Ubuntu's default `~/.bashrc`, or a `~/.config/ghostty/config` you set up before adopting this repo) blocks *every* package, not just the conflicting one. `make stow` runs `scripts/adopt-conflicts.sh` first, which detects exactly that case and moves the conflicting real files to `~/.dotfiles-backup/<timestamp>/` (never deletes) before stowing — so `make stow` / `./bootstrap.sh` works the same whether the machine is brand new or already has its own dotfiles.
+
 Adding a new package: create a directory named after the tool, lay out files inside it exactly as they should appear relative to `$HOME` (e.g. `mytool/.config/mytool/config`), then add it to `CORE_PACKAGES` (or `MAC_PACKAGES` for Mac-only tools) in the `Makefile` and run `make stow`.
 
 **Directories Stow doesn't create:** Stow creates whatever directory structure is needed to host the files it's symlinking (e.g. `~/.config/reg-tool/` gets created automatically because `reg.sh` lives there) — but it has no reason to create directories that don't contain a stowed file. A few tools need such directories at runtime for cache/state/sockets they generate themselves (zsh's history file and completion dump, SSH's control sockets). `make dirs` creates those; `make stow` depends on it, so a plain `make stow` (or `./bootstrap.sh`) always covers it. If you ever see zsh history not persisting or SSH connection-sharing not kicking in, run `make dirs` (or check `make doctor`, which verifies all of them exist).
@@ -67,8 +69,10 @@ dotfiles/
 ├── 1password/        (Mac only) → ~/.config/1Password/ssh/agent.toml
 │
 ├── scripts/
-│   ├── setup-local.sh           creates ~/.gitconfig.local and ~/.config/reg-tool/config
-│   └── doctor.sh                 health check (run via `make doctor`)
+│   ├── setup-local.sh            creates ~/.gitconfig.local and ~/.config/reg-tool/config
+│   ├── doctor.sh                  health check (run via `make doctor`)
+│   ├── adopt-conflicts.sh         backs up pre-existing real files before `stow` runs (run via `make stow`)
+│   └── gen_ssh_registers.py       generates ~/.ssh/conf.d/registers from store_registers.db (run manually — see --help)
 ├── linux/packages.sh            installs dev tools on Ubuntu/Debian (apt)
 ├── mac/Brewfile                 installs dev tools + GUI apps on Mac (brew bundle)
 ├── mac/macos-defaults.sh        applies macOS system preferences

@@ -31,10 +31,18 @@ dirs:  ## Create runtime data dirs Stow doesn't manage (zsh cache/state, ssh soc
 
 .PHONY: stow
 stow: dirs  ## Symlink all packages for this OS into $$HOME (idempotent)
+	@./scripts/adopt-conflicts.sh $(CORE_PACKAGES)
 	@stow -v $(CORE_PACKAGES)
 ifeq ($(OS),Darwin)
+	@./scripts/adopt-conflicts.sh $(MAC_PACKAGES)
 	@stow -v $(MAC_PACKAGES)
 	@mkdir -p "$(HOME)/Library/Application Support/Code"
+	@if [ -e "$(HOME)/Library/Application Support/Code/User" ] && [ ! -L "$(HOME)/Library/Application Support/Code/User" ]; then \
+		BACKUP="$(HOME)/.dotfiles-backup/$$(date +%Y%m%d-%H%M%S)/Library/Application Support/Code"; \
+		mkdir -p "$$BACKUP"; \
+		echo "  Backing up existing ~/Library/Application Support/Code/User -> $$BACKUP/User"; \
+		mv "$(HOME)/Library/Application Support/Code/User" "$$BACKUP/User"; \
+	fi
 	@ln -sf "$(HOME)/.config/Code/User" "$(HOME)/Library/Application Support/Code/User"
 endif
 

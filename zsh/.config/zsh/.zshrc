@@ -72,7 +72,7 @@ fi
 # =========================================================
 
 source "$ZDOTDIR/fzf.zsh"
-source "$ZDOTDIR/aliases.zsh"
+[ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
 source "$ZDOTDIR/bindings.zsh"
 source "$ZDOTDIR/plugins.zsh"
 source "$ZDOTDIR/prompt.zsh"

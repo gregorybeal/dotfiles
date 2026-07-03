@@ -1,6 +1,6 @@
 # Shared aliases for bash + zsh
 
-# Listing
+# Listing (upgraded to eza below if present)
 alias ll='ls -lah'
 alias la='ls -A'
 alias l='ls -CF'
@@ -9,6 +9,7 @@ alias l='ls -CF'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+alias -- -='cd -'
 
 # Safety
 alias rm='rm -i'
@@ -18,6 +19,7 @@ alias mv='mv -i'
 # Colors
 alias grep='grep --color=auto'
 alias diff='diff --color=auto'
+alias df='df -h'
 
 # tmux shortcuts
 alias t='tmux'
@@ -26,10 +28,12 @@ alias tls='tmux ls'
 alias tn='tmux new -s'
 alias tk='tmux kill-session -t'
 
-# Git shortcuts (in addition to omz git plugin)
+# Git shortcuts
 alias gs='git status'
 alias gd='git diff'
 alias gl='git log --oneline --graph --decorate -20'
+alias glog='PAGER="less -F -X" git log'
+alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 alias gp='git pull'
 alias gpu='git push'
 alias gco='git checkout'
@@ -57,17 +61,32 @@ alias uvtl='uv tool list'                   # list installed tools
 alias uvpy='uv python'                      # python version management
 alias uvx='uv tool run'                     # one-off run (like pipx run)
 
+# Editor
+alias vim='nvim'
+
 # Quick edits / reloads
 alias reload-shell='exec $SHELL -l'
 alias edit-zsh='${EDITOR:-vi} ~/.config/zsh/.zshrc'
 alias edit-tmux='${EDITOR:-vi} ~/.tmux.conf'
 alias edit-ssh='${EDITOR:-vi} ~/.ssh/config'
 
-# Modern CLI tool fallbacks (use better tool if present)
+# Modern CLI tool fallbacks — guarded, since bash in particular often runs
+# on remote/restricted hosts that don't have these installed.
 if command -v bat >/dev/null 2>&1; then alias cat='bat --paging=never'; fi
 if command -v batcat >/dev/null 2>&1; then alias cat='batcat --paging=never'; fi
-if command -v eza >/dev/null 2>&1; then alias ls='eza'; alias ll='eza -lah --git'; fi
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza --icons'
+    alias ll='eza -lh --icons --git'
+    alias la='eza -lah --icons --git'
+    alias tree='eza --tree --icons'
+fi
 if command -v fdfind >/dev/null 2>&1; then alias fd='fdfind'; fi
+if command -v rg >/dev/null 2>&1; then alias grep='rg --color=auto'; fi
+
+# zsh-only: route ls's tab-completion through eza's own completion function
+if [ -n "$ZSH_VERSION" ] && command -v eza >/dev/null 2>&1; then
+    compdef eza=ls
+fi
 
 # IT-specific
 alias myip='curl -s ifconfig.me; echo'

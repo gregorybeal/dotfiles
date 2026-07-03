@@ -3,7 +3,6 @@
 # Idempotent — safe to re-run.
 set -e
 
-REPO="github.com/gregorybeal/dotfiles"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 OS="$(uname -s)"

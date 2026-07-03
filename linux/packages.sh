@@ -15,7 +15,7 @@ sudo apt-get update -qq
 
 sudo apt-get install -y \
     `# Shell` \
-    zsh tmux \
+    zsh tmux stow \
     `# Core` \
     git curl wget tree watch build-essential \
     `# Modern CLI tools` \
@@ -98,25 +98,6 @@ fi
 if ! command -v zoxide >/dev/null 2>&1; then
     echo "Installing zoxide..."
     curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-fi
-
-# ─────────────────────────────────────────────────────────────
-#  Oh My Zsh + plugins
-# ─────────────────────────────────────────────────────────────
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    echo "Installing Oh My Zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
-        "" --unattended
-fi
-
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-        "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-fi
-if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-        "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
 
 # ─────────────────────────────────────────────────────────────

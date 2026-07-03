@@ -33,22 +33,22 @@ section() {
 }
 
 # ─────────────────────────────────────────────────────────────
-#  Check: symlinks point at the dotfiles repo
+#  Check: a target is a symlink resolving into this Stow repo
 # ─────────────────────────────────────────────────────────────
 
-check_link() {
-    local target="$1" expected_prefix="$2"
+check_stow() {
+    local target="$1" package="$2"
     if [ -L "$target" ]; then
-        local actual
-        actual=$(readlink "$target")
-        case "$actual" in
-            *"$expected_prefix"*) ok "$target → $actual" ;;
-            *) warn "$target is a symlink, but points to $actual (expected $expected_prefix)" ;;
+        local resolved
+        resolved="$(readlink -f "$target" 2>/dev/null)"
+        case "$resolved" in
+            "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → ~/dotfiles/$package/..." ;;
+            *) warn "$target is a symlink, but doesn't resolve into ~/dotfiles/$package (got $resolved)" ;;
         esac
     elif [ -e "$target" ]; then
-        warn "$target exists but isn't a symlink (was install.sh run?)"
+        warn "$target exists but isn't a symlink — run: cd ~/dotfiles && stow $package"
     else
-        fail "$target is missing"
+        info "$target is missing — run: cd ~/dotfiles && stow $package"
     fi
 }
 
@@ -78,17 +78,29 @@ echo "  OS:   $OS"
 echo "  Repo: $DOTFILES"
 
 # ─────────────────────────────────────────────────────────────
-section "Dotfile symlinks"
+section "Stow packages"
 # ─────────────────────────────────────────────────────────────
 
-check_link "$HOME/.zshrc" "dotfiles/shell"
-check_link "$HOME/.bashrc" "dotfiles/shell"
-check_link "$HOME/.aliases.sh" "dotfiles/shell"
-check_link "$HOME/.tmux.conf" "dotfiles/tmux"
-check_link "$HOME/.gitconfig" "dotfiles/git"
-check_link "$HOME/.ssh/config" "dotfiles/ssh"
-check_link "$HOME/.config/starship.toml" "dotfiles/starship"
-check_link "$HOME/.config/reg-tool/reg.sh" "dotfiles/reg-tool"
+check_stow "$HOME/.zshenv" "zsh"
+check_stow "$HOME/.config/zsh" "zsh"
+check_stow "$HOME/.bashrc" "bash"
+check_stow "$HOME/.aliases.sh" "aliases"
+check_stow "$HOME/.gitconfig" "git"
+check_stow "$HOME/.ssh/config" "ssh"
+check_stow "$HOME/.tmux.conf" "tmux"
+check_stow "$HOME/.config/starship.toml" "starship"
+check_stow "$HOME/.config/ghostty/config" "ghostty"
+check_stow "$HOME/.config/atuin/config.toml" "atuin"
+check_stow "$HOME/.config/btop/btop.conf" "btop"
+check_stow "$HOME/.config/reg-tool/reg.sh" "reg-tool"
+check_stow "$HOME/.config/Code/User/settings.json" "vscode"
+check_stow "$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1" "powershell"
+
+if [ "$OS" = "Darwin" ]; then
+    check_stow "$HOME/.config/karabiner/karabiner.json" "karabiner"
+    check_stow "$HOME/.config/keyboardcowboy/config.json" "keyboardcowboy"
+    check_stow "$HOME/.config/1Password/ssh/agent.toml" "1password"
+fi
 
 # ─────────────────────────────────────────────────────────────
 section "Core CLI tools"
@@ -99,6 +111,7 @@ check_cmd gh "GitHub CLI"
 check_cmd ssh "SSH client"
 check_cmd tmux "terminal multiplexer"
 check_cmd starship "prompt"
+check_cmd stow "GNU Stow (dotfiles deployment)"
 
 # ─────────────────────────────────────────────────────────────
 section "Modern CLI tools"
@@ -123,10 +136,10 @@ else
     warn "Unknown shell"
 fi
 
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    ok "Oh My Zsh installed"
+if [ -d "$HOME/.config/zsh/plugins" ] || [ -d "$HOME/.local/share/zinit" ]; then
+    ok "zinit/zsh plugins installed"
 else
-    info "Oh My Zsh not installed (skip if you don't use zsh)"
+    info "zinit not installed yet (self-installs on first zsh launch)"
 fi
 
 # ─────────────────────────────────────────────────────────────
@@ -166,6 +179,16 @@ if command -v gh >/dev/null 2>&1; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+section "Git identity"
+# ─────────────────────────────────────────────────────────────
+
+if [ -f "$HOME/.gitconfig.local" ]; then
+    ok "~/.gitconfig.local present"
+else
+    warn "~/.gitconfig.local missing — run: ./scripts/setup-local.sh"
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "tmux"
 # ─────────────────────────────────────────────────────────────
 
@@ -184,7 +207,7 @@ section "reg-tool"
 if [ -f "$HOME/.config/reg-tool/config" ]; then
     ok "reg-tool config present"
 else
-    warn "reg-tool config missing — copy from config.example and edit"
+    warn "reg-tool config missing — run: ./scripts/setup-local.sh"
 fi
 
 if [ -f "$HOME/.config/reg-tool/registers.csv" ]; then

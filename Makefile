@@ -22,8 +22,15 @@ help:  ## Show this help
 bootstrap:  ## Full setup on new machine (installs Stow + stows + installs packages)
 	@./bootstrap.sh
 
+.PHONY: dirs
+dirs:  ## Create runtime data dirs Stow doesn't manage (zsh cache/state, ssh sockets)
+	@mkdir -p "$(HOME)/.local/state/zsh"
+	@mkdir -p "$(HOME)/.cache/zsh"
+	@mkdir -p "$(HOME)/.ssh/sockets"
+	@chmod 700 "$(HOME)/.ssh/sockets"
+
 .PHONY: stow
-stow:  ## Symlink all packages for this OS into $$HOME (idempotent)
+stow: dirs  ## Symlink all packages for this OS into $$HOME (idempotent)
 	@stow -v $(CORE_PACKAGES)
 ifeq ($(OS),Darwin)
 	@stow -v $(MAC_PACKAGES)

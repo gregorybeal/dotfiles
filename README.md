@@ -41,6 +41,8 @@ Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `s
 
 Adding a new package: create a directory named after the tool, lay out files inside it exactly as they should appear relative to `$HOME` (e.g. `mytool/.config/mytool/config`), then add it to `CORE_PACKAGES` (or `MAC_PACKAGES` for Mac-only tools) in the `Makefile` and run `make stow`.
 
+**Directories Stow doesn't create:** Stow creates whatever directory structure is needed to host the files it's symlinking (e.g. `~/.config/reg-tool/` gets created automatically because `reg.sh` lives there) — but it has no reason to create directories that don't contain a stowed file. A few tools need such directories at runtime for cache/state/sockets they generate themselves (zsh's history file and completion dump, SSH's control sockets). `make dirs` creates those; `make stow` depends on it, so a plain `make stow` (or `./bootstrap.sh`) always covers it. If you ever see zsh history not persisting or SSH connection-sharing not kicking in, run `make dirs` (or check `make doctor`, which verifies all of them exist).
+
 ## Layout
 
 ```

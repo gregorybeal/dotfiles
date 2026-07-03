@@ -82,7 +82,8 @@ section "Stow packages"
 # ─────────────────────────────────────────────────────────────
 
 check_stow "$HOME/.zshenv" "zsh"
-check_stow "$HOME/.config/zsh" "zsh"
+check_stow "$HOME/.zshrc" "zsh"
+check_stow "$HOME/.zsh" "zsh"
 check_stow "$HOME/.bashrc" "bash"
 check_stow "$HOME/.aliases.sh" "aliases"
 check_stow "$HOME/.gitconfig" "git"
@@ -123,6 +124,7 @@ check_cmd bat "cat replacement"
 check_cmd fd "find replacement"
 check_cmd jq "JSON processor"
 check_cmd uv "Python toolchain"
+check_cmd atuin "shell history (installed but not wired into zsh — see README)"
 
 # ─────────────────────────────────────────────────────────────
 section "Shell"
@@ -136,7 +138,7 @@ else
     warn "Unknown shell"
 fi
 
-if [ -d "$HOME/.config/zsh/plugins" ] || [ -d "$HOME/.local/share/zinit" ]; then
+if [ -d "$HOME/.local/share/zinit" ]; then
     ok "zinit/zsh plugins installed"
 else
     info "zinit not installed yet (self-installs on first zsh launch)"

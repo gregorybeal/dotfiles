@@ -1,5 +1,5 @@
-# ~/.config/zsh/.zshrc — stowed from ~/dotfiles/zsh
-# Minimal zsh config, no framework. Plugins via zinit (see plugins.zsh).
+# ~/.zshrc — stowed from ~/dotfiles/zsh
+# Minimal zsh config, no framework. Plugins via zinit (see .zsh/plugins.zsh).
 
 # =========================================================
 # History
@@ -45,6 +45,8 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
 
 # =========================================================
 # Fuzzy finder (fzf shell integration — OS-dependent path)
@@ -71,12 +73,12 @@ fi
 # Modular config
 # =========================================================
 
-source "$ZDOTDIR/fzf.zsh"
+source "$HOME/.zsh/fzf.zsh"
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
-source "$ZDOTDIR/bindings.zsh"
-source "$ZDOTDIR/plugins.zsh"
-source "$ZDOTDIR/prompt.zsh"
-source "$ZDOTDIR/local-tools.zsh"
+source "$HOME/.zsh/bindings.zsh"
+source "$HOME/.zsh/plugins.zsh"
+source "$HOME/.zsh/prompt.zsh"
+source "$HOME/.zsh/local-tools.zsh"
 
 # =========================================================
 # Local-only / secrets

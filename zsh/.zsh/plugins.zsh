@@ -17,6 +17,7 @@ source "${ZINIT_HOME}/zinit.zsh"
 zinit light Aloxaf/fzf-tab
 
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:*' fzf-flags --height=60% --layout=reverse
 
 # =========================================================

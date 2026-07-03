@@ -3,7 +3,6 @@
 # Idempotent — safe to re-run.
 set -e
 
-REPO="github.com/gregorybeal/dotfiles"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 OS="$(uname -s)"
@@ -64,7 +63,6 @@ if [ "$PLATFORM" = "linux" ] || [ "$PLATFORM" = "wsl" ]; then
     LINUX_PACKAGES="$SCRIPT_DIR/linux/packages.sh"
     if [ -f "$LINUX_PACKAGES" ]; then
         echo ""
-        echo "Installing Linux packages..."
         bash "$LINUX_PACKAGES" || echo "linux/packages.sh hit some errors — run 'make linux-packages' to retry."
     fi
 fi

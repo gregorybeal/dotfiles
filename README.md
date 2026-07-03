@@ -37,7 +37,11 @@ $EDITOR ~/.tmux.conf   # or ~/.gitconfig, ~/.config/starship.toml, etc.
 
 ## How it works
 
-Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `stow <package>` (run from this directory) symlinks everything inside `<package>/` into the matching path under `$HOME`. For example, `zsh/.config/zsh/.zshrc` becomes a symlink at `~/.config/zsh/.zshrc`. Everything you see under `~/.config/...` for a stowed tool is a symlink pointing back into this repo — edit it in place, `git commit`, done.
+Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `stow <package>` (run from this directory) symlinks everything inside `<package>/` into the matching path under `$HOME`. For example, `git/.gitconfig` becomes a symlink at `~/.gitconfig`. Everything you see under `~/.config/...` (or `~/.zshrc`, `~/.gitconfig`, etc.) for a stowed tool is a symlink pointing back into this repo — edit it in place, `git commit`, done.
+
+**zsh deliberately isn't under `~/.config/zsh`:** zsh reads exactly one `.zshenv` automatically, resolved via `$ZDOTDIR`-or-`$HOME` *before* that resolution can be redirected — so pointing `ZDOTDIR` at `~/.config/zsh` from within `~/.zshenv` doesn't make zsh go back and re-read a second `.zshenv` from there; it silently never runs. Rather than work around that, `~/.zshenv` and `~/.zshrc` just live where zsh already looks for them by default, same as every other tool in this repo. The supporting files (`plugins.zsh`, `bindings.zsh`, etc.) live in a plain `~/.zsh/` and are `source`d explicitly from `.zshrc`.
+
+**Adopting an existing machine:** Stow refuses to symlink over a real (non-symlink) file that's already there — and it's all-or-nothing per invocation, so *one* conflict (e.g. Ubuntu's default `~/.bashrc`, or a `~/.config/ghostty/config` you set up before adopting this repo) blocks *every* package, not just the conflicting one. `make stow` runs `scripts/adopt-conflicts.sh` first, which detects exactly that case and moves the conflicting real files to `~/.dotfiles-backup/<timestamp>/` (never deletes) before stowing — so `make stow` / `./bootstrap.sh` works the same whether the machine is brand new or already has its own dotfiles.
 
 Adding a new package: create a directory named after the tool, lay out files inside it exactly as they should appear relative to `$HOME` (e.g. `mytool/.config/mytool/config`), then add it to `CORE_PACKAGES` (or `MAC_PACKAGES` for Mac-only tools) in the `Makefile` and run `make stow`.
 
@@ -47,7 +51,7 @@ Adding a new package: create a directory named after the tool, lay out files ins
 
 ```
 dotfiles/
-├── zsh/                        → ~/.zshenv, ~/.config/zsh/
+├── zsh/                        → ~/.zshenv, ~/.zshrc, ~/.zsh/
 ├── bash/                       → ~/.bashrc
 ├── aliases/                    → ~/.aliases.sh          (shared bash + zsh)
 ├── git/                        → ~/.gitconfig            (identity lives in ~/.gitconfig.local, not here)
@@ -67,8 +71,10 @@ dotfiles/
 ├── 1password/        (Mac only) → ~/.config/1Password/ssh/agent.toml
 │
 ├── scripts/
-│   ├── setup-local.sh           creates ~/.gitconfig.local and ~/.config/reg-tool/config
-│   └── doctor.sh                 health check (run via `make doctor`)
+│   ├── setup-local.sh            creates ~/.gitconfig.local and ~/.config/reg-tool/config
+│   ├── doctor.sh                  health check (run via `make doctor`)
+│   ├── adopt-conflicts.sh         backs up pre-existing real files before `stow` runs (run via `make stow`)
+│   └── gen_ssh_registers.py       generates ~/.ssh/conf.d/registers from store_registers.db (run manually — see --help)
 ├── linux/packages.sh            installs dev tools on Ubuntu/Debian (apt)
 ├── mac/Brewfile                 installs dev tools + GUI apps on Mac (brew bundle)
 ├── mac/macos-defaults.sh        applies macOS system preferences

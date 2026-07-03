@@ -1,14 +1,5 @@
-# ~/.config/zsh/.zshrc — stowed from ~/dotfiles/zsh
-# Minimal zsh config, no framework. Plugins via zinit (see plugins.zsh).
-
-# Normally ZDOTDIR and the XDG_* vars are set by ~/.zshenv and
-# $ZDOTDIR/.zshenv before .zshrc is ever reached — but that only happens
-# on a genuinely fresh shell startup. If this file gets manually `source`d
-# in an existing shell that predates that (e.g. an old terminal still
-# running from before this repo was stowed), fall back the same way so
-# the sourcing/HISTFILE/compinit paths below don't silently break.
-: "${ZDOTDIR:=$HOME/.config/zsh}"
-[ -z "$XDG_STATE_HOME" ] && [ -f "$ZDOTDIR/.zshenv" ] && source "$ZDOTDIR/.zshenv"
+# ~/.zshrc — stowed from ~/dotfiles/zsh
+# Minimal zsh config, no framework. Plugins via zinit (see .zsh/plugins.zsh).
 
 # =========================================================
 # History
@@ -84,12 +75,12 @@ fi
 # Modular config
 # =========================================================
 
-source "$ZDOTDIR/fzf.zsh"
+source "$HOME/.zsh/fzf.zsh"
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
-source "$ZDOTDIR/bindings.zsh"
-source "$ZDOTDIR/plugins.zsh"
-source "$ZDOTDIR/prompt.zsh"
-source "$ZDOTDIR/local-tools.zsh"
+source "$HOME/.zsh/bindings.zsh"
+source "$HOME/.zsh/plugins.zsh"
+source "$HOME/.zsh/prompt.zsh"
+source "$HOME/.zsh/local-tools.zsh"
 
 # =========================================================
 # Local-only / secrets

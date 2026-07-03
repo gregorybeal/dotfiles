@@ -1,0 +1,207 @@
+# ═══════════════════════════════════════════════════════════════
+#  Ghostty configuration
+#  ~/.config/ghostty/config  (Mac/Linux)
+#  %APPDATA%\ghostty\config   (Windows, when supported)
+#
+#  Ghostty has excellent defaults — this only overrides the
+#  subjective stuff (theme, font, keybinds) and a few QoL tweaks.
+#  Full reference: ghostty +show-config --default --docs
+#                  https://ghostty.org/docs/config/reference
+#
+#  Reload after editing: Cmd+Shift+, (Mac) — some options need a
+#  full restart (noted inline).
+# ═══════════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────────
+#  Font
+# ───────────────────────────────────────────────────────────────
+
+# Ghostty embeds JetBrains Mono + Nerd Font symbols by default, so
+# this works even before you install a font. Override to taste.
+font-family = "FiraCode Nerd Font"
+font-size = 14
+
+# Ligatures and contextual alternates (FiraCode's arrows, !=, =>, etc.)
+font-feature = calt
+font-feature = liga
+
+# Slightly thicken text on macOS for better contrast (subtle, optional)
+font-thicken = true
+
+# Fallback fonts: if the primary font lacks a glyph, Ghostty falls
+# back automatically to its built-in Nerd Font. You can add more
+# fallbacks by repeating font-family.
+
+# ───────────────────────────────────────────────────────────────
+#  Theme & colors
+# ───────────────────────────────────────────────────────────────
+
+# Auto-switch between light and dark Solarized based on macOS system
+# appearance. Format: theme = light:<name>,dark:<name>
+# When your Mac switches to dark mode (or via schedule), Ghostty follows.
+# theme = light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+
+# ── Alternate themes ──────────────────────────────────────────
+# To use one instead of the auto-switching above, comment out the
+# line above and uncomment ONE of these. Reload with Cmd+Shift+,
+# Browse all built-ins live with: ghostty +list-themes
+#
+# Solarized family:
+# theme = Solarized Dark
+# theme = Solarized Light
+# theme = Solarized Dark - Patched      # variant with tweaked brights
+# theme = solarized-osaka               # modern Solarized riff
+# theme = solarized-osaka-night
+#
+# Other favorites that pair well with your tmux/Starship:
+# theme = catppuccin-mocha              # what you had before
+# theme = catppuccin-latte              # light counterpart to mocha
+# theme = GruvboxDark
+# theme = Tokyo Night
+# theme = Nord
+
+# Use the wide-gamut P3 color space on capable displays (most modern Macs)
+window-colorspace = display-p3
+
+# Solarized has carefully-tuned background colors — keep them mostly
+# opaque so the palette stays accurate. Light blur, minimal transparency.
+background-opacity = 0.98
+background-blur-radius = 15
+
+# ───────────────────────────────────────────────────────────────
+#  Cursor
+# ───────────────────────────────────────────────────────────────
+
+cursor-style = bar
+cursor-style-blink = true
+
+# Make the cursor easier to find — slightly thicker bar
+adjust-cursor-thickness = 1
+
+# ───────────────────────────────────────────────────────────────
+#  Window
+# ───────────────────────────────────────────────────────────────
+
+# Padding around the terminal content (breathing room)
+window-padding-x = 10
+window-padding-y = 8
+
+# Keep padding color matched to background when window is resized
+window-padding-balance = true
+
+# Remember window size/position between launches
+window-save-state = always
+
+# Native macOS title bar (cleaner than the tabs-in-titlebar style;
+# change to "tabs" if you prefer tabs embedded in the title bar)
+macos-titlebar-style = native
+
+# Follow the system light/dark mode
+window-theme = system
+
+# Default window size (columns x rows) for new windows
+window-width = 140
+window-height = 42
+
+# ───────────────────────────────────────────────────────────────
+#  Scrollback & behavior
+# ───────────────────────────────────────────────────────────────
+
+# Generous scrollback for long log tails / Ansible output.
+# (You mostly scroll within tmux, but this covers non-tmux use.)
+scrollback-limit = 50000
+
+# Copy selected text to clipboard automatically on selection.
+# Pairs well with tmux — though inside tmux, tmux handles copy.
+copy-on-select = clipboard
+
+# Don't prompt "are you sure?" when closing a surface with no
+# running process. Still prompts if a process is active.
+confirm-close-surface = false
+
+# Let unfocused split panes dim slightly so the active one stands out
+unfocused-split-opacity = 0.85
+
+# ───────────────────────────────────────────────────────────────
+#  Shell integration
+# ───────────────────────────────────────────────────────────────
+
+# Auto-detect and inject shell integration (zsh/bash/fish).
+# Enables: new tabs/splits open in the current working directory,
+# prompt redraw on resize, jump-to-prompt, and more.
+shell-integration = detect
+
+# Include SSH terminfo + cwd reporting features
+shell-integration-features = cursor,sudo,title
+
+# ───────────────────────────────────────────────────────────────
+#  macOS specifics
+# ───────────────────────────────────────────────────────────────
+
+# Treat the left Option key as Alt/Meta so terminal apps (and
+# emacs-style shortcuts in your shell) get the Meta key.
+# Right Option still types special characters.
+macos-option-as-alt = left
+
+# Hide the macOS menu bar title icon clutter (optional)
+# macos-icon = official
+
+# ───────────────────────────────────────────────────────────────
+#  Keybindings
+#
+#  Ghostty's defaults are good. These add native split/tab management
+#  for when you're NOT in tmux. Inside tmux, use your prefix bindings
+#  instead — these won't conflict since tmux captures the keys first.
+#
+#  Syntax: keybind = trigger=action
+#  List all defaults: ghostty +list-keybinds
+# ───────────────────────────────────────────────────────────────
+
+# Splits (native Ghostty, not tmux)
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+keybind = cmd+w=close_surface
+
+# Navigate between splits
+keybind = cmd+alt+left=goto_split:left
+keybind = cmd+alt+right=goto_split:right
+keybind = cmd+alt+up=goto_split:up
+keybind = cmd+alt+down=goto_split:down
+
+# Zoom the active split to fill the window (toggle)
+keybind = cmd+shift+enter=toggle_split_zoom
+
+# Tabs
+keybind = cmd+t=new_tab
+keybind = cmd+shift+left_bracket=previous_tab
+keybind = cmd+shift+right_bracket=next_tab
+
+# Fullscreen
+keybind = cmd+enter=toggle_fullscreen
+
+# Quick terminal — a drop-down terminal toggled with a global hotkey
+# (like Guake/iTerm hotkey window). Great for quick commands.
+keybind = global:cmd+grave_accent=toggle_quick_terminal
+
+# Reload config without restarting
+keybind = cmd+shift+comma=reload_config
+
+# Clear scrollback + screen
+keybind = cmd+k=clear_screen
+
+# ───────────────────────────────────────────────────────────────
+#  Notes
+#  - Inside tmux, tmux intercepts keys first, so the split/tab
+#    binds above only act when you're NOT in a tmux session.
+#  - For OSC 52 clipboard from remote tmux to work, Ghostty supports
+#    it natively (no config needed) — just ensure remote tmux has
+#    'set -g set-clipboard on' (your .tmux.conf already does).
+#  - THEME HARMONY: your tmux statusline + Windows Terminal use
+#    Catppuccin Mocha. Now that Ghostty uses Solarized, the colors
+#    won't perfectly match across tools. If you want everything
+#    aligned on Solarized, the tmux statusline colors live in
+#    ~/.tmux.conf under "Status bar" — swap the hex values there:
+#      Solarized Dark base:   bg #002b36  fg #839496  accent #268bd2
+#      Solarized Light base:  bg #fdf6e3  fg #657b83  accent #268bd2
+# ───────────────────────────────────────────────────────────────

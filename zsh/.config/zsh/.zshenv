@@ -24,6 +24,7 @@ export GPG_TTY=$(tty)
 export PATH="$HOME/.local/bin:$PATH"
 [[ -d "$HOME/bin" ]] && export PATH="$HOME/bin:$PATH"
 [[ -d "$HOME/.fzf/bin" ]] && export PATH="$HOME/.fzf/bin:$PATH"
+[[ -f "$HOME/.atuin/bin/env" ]] && source "$HOME/.atuin/bin/env"
 
 # ---------- macOS ----------
 if [[ "$(uname -s)" == "Darwin" ]]; then

@@ -4,6 +4,9 @@
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
 
+CORE_PACKAGES := zsh bash aliases git ssh tmux starship ghostty atuin btop reg-tool vscode powershell
+MAC_PACKAGES  := karabiner keyboardcowboy 1password
+
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -16,12 +19,28 @@ help:  ## Show this help
 	@echo ""
 
 .PHONY: bootstrap
-bootstrap:  ## Full setup on new machine (installs chezmoi + applies dotfiles)
+bootstrap:  ## Full setup on new machine (installs Stow + stows + installs packages)
 	@./bootstrap.sh
 
-.PHONY: bootstrap-nosudo
-bootstrap-nosudo:  ## Full setup on restricted Linux box (no sudo)
-	@./bootstrap-nosudo.sh
+.PHONY: stow
+stow:  ## Symlink all packages for this OS into $$HOME (idempotent)
+	@stow -v $(CORE_PACKAGES)
+ifeq ($(OS),Darwin)
+	@stow -v $(MAC_PACKAGES)
+	@mkdir -p "$(HOME)/Library/Application Support/Code"
+	@ln -sf "$(HOME)/.config/Code/User" "$(HOME)/Library/Application Support/Code/User"
+endif
+
+.PHONY: unstow
+unstow:  ## Remove all package symlinks from $$HOME
+	@stow -D -v $(CORE_PACKAGES)
+ifeq ($(OS),Darwin)
+	@stow -D -v $(MAC_PACKAGES)
+endif
+
+.PHONY: setup-local
+setup-local:  ## Create machine-local config (git identity, reg-tool config)
+	@./scripts/setup-local.sh
 
 .PHONY: linux-packages
 linux-packages:  ## Install Linux packages — Ubuntu/Debian with sudo (idempotent)
@@ -62,17 +81,6 @@ else
 	@echo "brew bundle only runs on Mac"
 endif
 
-.PHONY: brew-cleanup
-brew-cleanup:  ## Remove brew packages NOT in Brewfile (DANGEROUS — dry-run first)
-ifeq ($(OS),Darwin)
-	@echo "Dry run — these would be removed:"
-	@brew bundle cleanup --file=mac/Brewfile
-	@echo ""
-	@echo "Run 'brew bundle cleanup --file=mac/Brewfile --force' to actually remove."
-else
-	@echo "brew bundle only runs on Mac"
-endif
-
 .PHONY: macos-defaults
 macos-defaults:  ## Apply macOS system preferences (Mac only)
 ifeq ($(OS),Darwin)
@@ -86,8 +94,9 @@ doctor:  ## Health check the dotfiles setup
 	@./scripts/doctor.sh
 
 .PHONY: update
-update:  ## Pull latest changes and re-apply dotfiles
-	@chezmoi update
+update:  ## Pull latest changes and re-stow
+	@git pull
+	@$(MAKE) stow
 
 .PHONY: reg-refresh
 reg-refresh:  ## Refresh register inventory CSV from SQLite

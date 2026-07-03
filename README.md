@@ -1,132 +1,89 @@
 # dotfiles
 
-Personal config for shell, tmux/psmux, git, SSH, terminals, VS Code, and the `reg-tool` register management toolkit. Managed with [chezmoi](https://chezmoi.io). Works on Mac, WSL, Linux, and Windows.
+Personal config for shell, tmux, git, SSH, terminals, VS Code, and the `reg-tool` register management toolkit. Managed with [GNU Stow](https://www.gnu.org/software/stow/). Works on Mac, Linux, and WSL. (Native Windows is no longer supported — use WSL.)
 
 ## Quick start
 
 **On a brand new machine (Mac or WSL/Linux):**
 ```bash
-# One-liner (installs chezmoi + applies everything):
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply github.com/gregorybeal/dotfiles
-```
-
-**Or if you've already cloned the repo:**
-```bash
-cd ~/code/personal/dotfiles
+git clone https://github.com/gregorybeal/dotfiles ~/dotfiles
+cd ~/dotfiles
 ./bootstrap.sh
-```
-
-**Windows** (PowerShell):
-```powershell
-cd $env:USERPROFILE\GitHub\personal\dotfiles
-.\bootstrap.ps1
-```
-
-**Restricted Linux (no sudo):**
-```bash
-./bootstrap-nosudo.sh
 ```
 
 After bootstrap, restart your shell and run:
 ```bash
 gh auth login        # GitHub HTTPS auth — yes to "authenticate git"
-make doctor          # verify everything's healthy
+make doctor           # verify everything's healthy
 ```
 
 ## Daily commands
 
 ```bash
 make help          # show all targets
-chezmoi apply      # re-apply dotfiles
-chezmoi diff       # preview what would change
-make update        # pull latest + re-apply (chezmoi update)
-make doctor        # health check
-make brew          # update Mac apps from Brewfile
+make stow           # (re-)symlink all packages into $HOME — idempotent
+make unstow          # remove all package symlinks from $HOME
+make update         # git pull + re-stow
+make doctor          # health check
+make setup-local    # (re-)create machine-local config (git identity, reg-tool config)
+make brew           # update Mac apps from Brewfile
 ```
 
-**Edit a managed dotfile directly** (zshrc, bashrc, aliases — plain files):
+**Edit a config file directly** (it's just a symlink back into this repo):
 ```bash
-$EDITOR ~/.local/share/chezmoi/dot_zshrc   # edit the source file
-chezmoi apply                               # deploy the edit
+$EDITOR ~/.tmux.conf   # or ~/.gitconfig, ~/.config/starship.toml, etc.
+                        # editing the symlink target edits the file in this repo directly
 ```
 
-**Or use chezmoi's editor wrapper:**
-```bash
-chezmoi edit ~/.zshrc    # opens source file in $EDITOR
-chezmoi apply            # deploy the edit
-```
+## How it works
 
-## First-time prompts
+Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `stow <package>` (run from this directory) symlinks everything inside `<package>/` into the matching path under `$HOME`. For example, `zsh/.config/zsh/.zshrc` becomes a symlink at `~/.config/zsh/.zshrc`. Everything you see under `~/.config/...` for a stowed tool is a symlink pointing back into this repo — edit it in place, `git commit`, done.
 
-On first run, chezmoi will ask:
-- **Git user name** and **email** — used in `~/.gitconfig`
-- **Git SSH signing key** — optional; leave blank to skip commit signing
-- **SSH config variant** — `unix` (full, with jump box) or `minimal` (bare bones); auto-set to `windows` on Windows
-
-Answers are saved to `~/.config/chezmoi/chezmoi.toml` and never re-prompted.
+Adding a new package: create a directory named after the tool, lay out files inside it exactly as they should appear relative to `$HOME` (e.g. `mytool/.config/mytool/config`), then add it to `CORE_PACKAGES` (or `MAC_PACKAGES` for Mac-only tools) in the `Makefile` and run `make stow`.
 
 ## Layout
 
 ```
 dotfiles/
-├── .chezmoi.toml.tmpl          first-run config (git name/email, SSH variant)
-├── .chezmoiignore              platform-specific file filtering
-├── .chezmoitemplates/          shared template fragments (PowerShell profile)
+├── zsh/                        → ~/.zshenv, ~/.config/zsh/
+├── bash/                       → ~/.bashrc
+├── aliases/                    → ~/.aliases.sh          (shared bash + zsh)
+├── git/                        → ~/.gitconfig            (identity lives in ~/.gitconfig.local, not here)
+├── ssh/                        → ~/.ssh/config
+├── tmux/                       → ~/.tmux.conf
+├── starship/                   → ~/.config/starship.toml
+├── ghostty/                    → ~/.config/ghostty/config
+├── atuin/                      → ~/.config/atuin/config.toml
+├── btop/                       → ~/.config/btop/btop.conf
+├── reg-tool/                   → ~/.config/reg-tool/{reg.sh,refresh.py}
+│   └── config.example              (not deployed — copied to ~/.config/reg-tool/config by setup-local.sh)
+├── vscode/                     → ~/.config/Code/User/{settings.json,keybindings.json,snippets/}
+│   └── extensions.txt              (not deployed — read by `make vscode-ext`)
+├── powershell/                 → ~/.config/powershell/Microsoft.PowerShell_profile.ps1  (pwsh on Mac/Linux/WSL)
+├── karabiner/        (Mac only) → ~/.config/karabiner/karabiner.json
+├── keyboardcowboy/   (Mac only) → ~/.config/keyboardcowboy/config.json
+├── 1password/        (Mac only) → ~/.config/1Password/ssh/agent.toml
 │
-├── dot_zshrc.tmpl              → ~/.zshrc
-├── dot_bashrc.tmpl             → ~/.bashrc
-├── dot_aliases.sh              → ~/.aliases.sh
-├── dot_tmux.conf               → ~/.tmux.conf
-├── dot_gitconfig.tmpl          → ~/.gitconfig
+├── scripts/
+│   ├── setup-local.sh           creates ~/.gitconfig.local and ~/.config/reg-tool/config
+│   └── doctor.sh                 health check (run via `make doctor`)
+├── linux/packages.sh            installs dev tools on Ubuntu/Debian (apt)
+├── mac/Brewfile                 installs dev tools + GUI apps on Mac (brew bundle)
+├── mac/macos-defaults.sh        applies macOS system preferences
 │
-├── dot_ssh/
-│   └── config.tmpl             → ~/.ssh/config  (variant selected at init)
-│
-├── dot_config/
-│   ├── starship.toml           → ~/.config/starship.toml
-│   ├── ghostty/config          → ~/.config/ghostty/config
-│   ├── powershell/             → ~/.config/powershell/$PROFILE  (Mac/Linux)
-│   ├── reg-tool/               → ~/.config/reg-tool/ (reg.sh, refresh.py)
-│   ├── 1Password/ssh/          → ~/.config/1Password/ssh/agent.toml  (symlink)
-│   ├── atuin/                  → ~/.config/atuin/config.toml  (symlink)
-│   ├── btop/                   → ~/.config/btop/btop.conf  (symlink)
-│   ├── karabiner/              → ~/.config/karabiner/karabiner.json  (symlink)
-│   └── keyboardcowboy/         → ~/.config/keyboardcowboy/config.json  (symlink)
-│
-├── Documents/PowerShell/       → ~/Documents/PowerShell/$PROFILE (Windows only)
-│
-├── run_deploy-vscode.sh.tmpl   copies vscode/ settings to platform path on apply
-├── run_once_init-reg-tool-config.*  creates ~/.config/reg-tool/config on first run
-│
-├── 1Password/                  agent.toml (symlink source — GUI-written)
-├── atuin/                      config.toml (symlink source — GUI-written)
-├── btop/                       btop.conf (symlink source — GUI-written)
-├── karabiner/                  karabiner.json (symlink source — GUI-written)
-├── keyboardcowboy/             config.json (symlink source — GUI-written)
-├── vscode/                     settings.json, keybindings.json, snippets/
-├── windows-terminal/           settings.json (deployed via run script on Windows)
-├── mac/                        Brewfile + macos-defaults.sh
-├── reg-tool/                   config.example, reg.ps1
-├── scripts/                    doctor.sh, gen_ssh_registers.py
-├── docs/                       detailed setup & reference docs
-│
-├── bootstrap.sh                new machine setup — Mac + WSL/Linux
-├── bootstrap.ps1               new machine setup — Windows
-├── bootstrap-nosudo.sh         restricted Linux (no sudo)
-└── Makefile                    short commands for common ops
+├── bootstrap.sh                  new machine setup — Mac + WSL/Linux
+└── Makefile                      short commands for common ops
 ```
 
-## Machine-specific overrides
+## Machine-specific / secret files (never committed, gitignored)
 
-These files are gitignored and sourced automatically:
+- `~/.gitconfig.local` — **required**: `[user] name / email / signingkey`. Created by `make setup-local` (prompts on first run).
+- `~/.config/reg-tool/config` — jumpbox, SQLite paths. Created from `reg-tool/config.example` by `make setup-local`.
 - `~/.zshrc.local` — extra zsh config (work credentials, machine-specific PATH, etc.)
 - `~/.bashrc.local` — extra bash config
-- `~/.gitconfig.local` — git identity overrides, per-repo settings
+- `~/.ssh/config.local` — extra SSH config, included automatically
 - `~/.secrets` — env vars / tokens (sourced by both zsh + bash)
-- `~/.ssh/config.local` — extra SSH config (minimal variant includes this automatically)
 
-## Full docs
+## Chezmoi predecessor
 
-- **[docs/QUICKSTART.md](docs/QUICKSTART.md)** — exact commands for new machine setup (Mac, Linux, Windows)
-- **[docs/SETUP.md](docs/SETUP.md)** — first-time setup walkthrough, gh auth, multi-account, machine-specific overrides
-- **[docs/REFERENCE.md](docs/REFERENCE.md)** — what gets installed, per-OS notes, gh CLI cheatsheet, reg-tool reference, troubleshooting
+This repo replaced a [chezmoi](https://chezmoi.io)-managed setup (still present, untouched, at `~/.local/share/chezmoi` on machines that had it — kept as a historical reference, not actively used). Chezmoi's templating (per-machine git identity, OS-conditional files) has no Stow equivalent; see `~/.gitconfig.local` above for how that's handled instead.

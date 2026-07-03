@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap dotfiles on Mac or WSL/Linux using chezmoi.
+# Bootstrap dotfiles on Mac or WSL/Linux using GNU Stow.
 # Idempotent — safe to re-run.
 set -e
 
@@ -17,7 +17,7 @@ case "$OS" in
         fi
         ;;
     *)
-        echo "Unsupported OS: $OS — use bootstrap.ps1 on Windows."
+        echo "Unsupported OS: $OS — this dotfiles repo is Mac/Linux/WSL only (see README)."
         exit 1
         ;;
 esac
@@ -32,47 +32,35 @@ if [ "$PLATFORM" = "mac" ] && ! command -v brew >/dev/null 2>&1; then
     eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
 fi
 
-# --- Install chezmoi ---
-if ! command -v chezmoi >/dev/null 2>&1; then
-    echo "Installing chezmoi..."
-    if command -v brew >/dev/null 2>&1; then
-        brew install chezmoi
+# --- Install Stow ---
+if ! command -v stow >/dev/null 2>&1; then
+    echo "Installing GNU Stow..."
+    if [ "$PLATFORM" = "mac" ]; then
+        brew install stow
     else
-        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
-        export PATH="$HOME/.local/bin:$PATH"
+        sudo apt-get update -qq && sudo apt-get install -y stow
     fi
 fi
 
-# --- Apply dotfiles ---
-if [ -f "$SCRIPT_DIR/.chezmoi.toml.tmpl" ]; then
-    echo "Applying dotfiles from $SCRIPT_DIR..."
-    chezmoi init --source "$SCRIPT_DIR" --apply
-    # Symlink the default chezmoi source dir to this repo so that future
-    # `chezmoi apply` / `chezmoi diff` / `chezmoi doctor` work without --source.
-    CHEZMOI_DEFAULT="$HOME/.local/share/chezmoi"
-    if [ ! -e "$CHEZMOI_DEFAULT" ]; then
-        mkdir -p "$(dirname "$CHEZMOI_DEFAULT")"
-        ln -sf "$SCRIPT_DIR" "$CHEZMOI_DEFAULT"
-        echo "Linked ~/.local/share/chezmoi -> $SCRIPT_DIR"
-    fi
-else
-    echo "Cloning and applying dotfiles from $REPO..."
-    chezmoi init --apply "$REPO"
-fi
+# --- Stow all packages ---
+echo ""
+echo "Stowing dotfiles from $SCRIPT_DIR..."
+cd "$SCRIPT_DIR"
+make stow
+
+# --- Machine-local config (git identity, reg-tool config) ---
+echo ""
+./scripts/setup-local.sh
 
 # --- Mac: install packages from Brewfile ---
 if [ "$PLATFORM" = "mac" ]; then
-    CHEZMOI_SRC="$(chezmoi source-path)"
-    BREWFILE="$CHEZMOI_SRC/mac/Brewfile"
-    if [ -f "$BREWFILE" ]; then
-        echo ""
-        echo "Installing Mac packages from Brewfile..."
-        brew bundle --file="$BREWFILE" || echo "brew bundle hit some errors — run 'make brew' to retry."
-    fi
+    echo ""
+    echo "Installing Mac packages from Brewfile..."
+    brew bundle --file="$SCRIPT_DIR/mac/Brewfile" || echo "brew bundle hit some errors — run 'make brew' to retry."
 fi
 
 # --- Linux: install packages ---
-if [ "$PLATFORM" = "linux" ]; then
+if [ "$PLATFORM" = "linux" ] || [ "$PLATFORM" = "wsl" ]; then
     LINUX_PACKAGES="$SCRIPT_DIR/linux/packages.sh"
     if [ -f "$LINUX_PACKAGES" ]; then
         echo ""
@@ -83,7 +71,7 @@ fi
 
 echo ""
 echo "Done! Next steps:"
-echo "  1. Restart your shell (or: source ~/.zshrc)"
+echo "  1. Restart your shell (or: exec zsh)"
 echo "  2. gh auth login"
 echo "  3. Edit ~/.config/reg-tool/config with your jumpbox and SQLite paths"
 echo "  4. make doctor  — verify everything's healthy"

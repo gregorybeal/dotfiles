@@ -21,6 +21,7 @@ tap "Sanyam-G/switch"
 # Core shell tools
 brew "zsh"
 brew "tmux"
+brew "stow"
 brew "git"
 brew "gh"
 brew "starship"

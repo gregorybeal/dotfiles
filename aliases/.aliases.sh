@@ -66,7 +66,7 @@ alias vim='nvim'
 
 # Quick edits / reloads
 alias reload-shell='exec $SHELL -l'
-alias edit-zsh='${EDITOR:-vi} ~/.config/zsh/.zshrc'
+alias edit-zsh='${EDITOR:-vi} ~/.zshrc'
 alias edit-tmux='${EDITOR:-vi} ~/.tmux.conf'
 alias edit-ssh='${EDITOR:-vi} ~/.ssh/config'
 

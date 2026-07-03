@@ -99,30 +99,3 @@ function y() {
     [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
     command rm -f -- "$tmp"
 }
-
-# ---------- jiratui completions ----------
-if (( $+commands[jiratui] )); then
-    _jiratui_completion() {
-        local -a completions completions_with_descriptions response
-        response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) \
-            _JIRATUI_COMPLETE=zsh_complete jiratui)}")
-        for type key descr in ${response}; do
-            if [[ "$type" == "plain" ]]; then
-                if [[ "$descr" == "_" ]]; then
-                    completions+=("$key")
-                else
-                    completions_with_descriptions+=("$key":"$descr")
-                fi
-            elif [[ "$type" == "dir" ]]; then _path_files -/
-            elif [[ "$type" == "file" ]]; then _path_files -f
-            fi
-        done
-        [ -n "$completions_with_descriptions" ] && _describe -V unsorted completions_with_descriptions -U
-        [ -n "$completions" ] && compadd -U -V unsorted -a completions
-    }
-    if [[ $zsh_eval_context[-1] == loadautofunc ]]; then
-        _jiratui_completion "$@"
-    else
-        compdef _jiratui_completion jiratui
-    fi
-fi

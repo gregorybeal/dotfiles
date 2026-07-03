@@ -14,6 +14,7 @@ shopt -s globstar
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
 [ -d "$HOME/.fzf/bin" ] && export PATH="$HOME/.fzf/bin:$PATH"
+[ -f "$HOME/.atuin/bin/env" ] && source "$HOME/.atuin/bin/env"
 
 # ---------- Prompt ----------
 if command -v starship >/dev/null 2>&1; then

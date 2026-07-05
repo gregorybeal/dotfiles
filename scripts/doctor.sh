@@ -114,7 +114,6 @@ check_stow "$HOME/.config/ghostty/config" "ghostty"
 check_stow "$HOME/.config/atuin/config.toml" "atuin"
 check_stow "$HOME/.config/btop/btop.conf" "btop"
 check_stow "$HOME/.config/reg-tool/reg.sh" "reg-tool"
-check_stow "$HOME/.config/Code/User/settings.json" "vscode"
 check_stow "$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1" "powershell"
 
 if [ "$OS" = "Darwin" ]; then

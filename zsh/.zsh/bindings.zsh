@@ -19,6 +19,13 @@ zvm_after_init() {
   bindkey '^\' autosuggest-toggle           # Ctrl-\: toggle autosuggestions
   bindkey '^[[A' history-substring-search-up
   bindkey '^[[B' history-substring-search-down
+
+  # atuin's Ctrl-R binding also gets wiped by the reset above — re-run
+  # its init here (not in local-tools.zsh, which runs too early) so it
+  # survives. Re-running is safe/idempotent. --disable-up-arrow keeps
+  # Up/Down on history-substring-search above — atuin's default init
+  # otherwise silently takes over Up too, which was never asked for.
+  command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh --disable-up-arrow)"
 }
 
 # =========================================================

@@ -4,7 +4,7 @@
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
 
-CORE_PACKAGES := zsh bash aliases git ssh tmux starship ghostty atuin btop reg-tool vscode powershell
+CORE_PACKAGES := zsh bash aliases git ssh tmux starship ghostty atuin btop reg-tool powershell
 MAC_PACKAGES  := karabiner keyboardcowboy 1password
 
 .DEFAULT_GOAL := help
@@ -36,14 +36,6 @@ stow: dirs  ## Symlink all packages for this OS into $$HOME (idempotent)
 ifeq ($(OS),Darwin)
 	@./scripts/adopt-conflicts.sh $(MAC_PACKAGES)
 	@stow -v $(MAC_PACKAGES)
-	@mkdir -p "$(HOME)/Library/Application Support/Code"
-	@if [ -e "$(HOME)/Library/Application Support/Code/User" ] && [ ! -L "$(HOME)/Library/Application Support/Code/User" ]; then \
-		BACKUP="$(HOME)/.dotfiles-backup/$$(date +%Y%m%d-%H%M%S)/Library/Application Support/Code"; \
-		mkdir -p "$$BACKUP"; \
-		echo "  Backing up existing ~/Library/Application Support/Code/User -> $$BACKUP/User"; \
-		mv "$(HOME)/Library/Application Support/Code/User" "$$BACKUP/User"; \
-	fi
-	@ln -sf "$(HOME)/.config/Code/User" "$(HOME)/Library/Application Support/Code/User"
 endif
 
 .PHONY: unstow
@@ -78,7 +70,6 @@ ifeq ($(OS),Darwin)
 					brew\ *) name=$$(echo "$$line" | sed -E 's/^brew[[:space:]]+"([^"]+)".*/\1/'); brew install "$$name" 2>/dev/null || echo "  ✗ brew: $$name" ;; \
 					cask\ *) name=$$(echo "$$line" | sed -E 's/^cask[[:space:]]+"([^"]+)".*/\1/'); brew install --cask "$$name" 2>/dev/null || echo "  ✗ cask: $$name" ;; \
 					mas\ *) id=$$(echo "$$line" | sed -E 's/.*id:[[:space:]]*([0-9]+).*/\1/'); mas install "$$id" 2>/dev/null || echo "  ✗ mas: $$id" ;; \
-					vscode\ *) name=$$(echo "$$line" | sed -E 's/^vscode[[:space:]]+"([^"]+)".*/\1/'); code --install-extension "$$name" --force 2>/dev/null || echo "  ✗ vscode: $$name" ;; \
 					uv\ *) name=$$(echo "$$line" | sed -E 's/^uv[[:space:]]+"([^"]+)".*/\1/'); uv tool install "$$name" 2>/dev/null || echo "  ✗ uv: $$name" ;; \
 				esac; \
 			done; \
@@ -117,7 +108,3 @@ update:  ## Pull latest changes and re-stow
 reg-refresh:  ## Refresh register inventory CSV from SQLite
 	@uv run ~/.config/reg-tool/refresh.py
 
-.PHONY: vscode-ext
-vscode-ext:  ## Install all VS Code extensions
-	@cat vscode/extensions.txt | grep -vE '^\s*(#|$$)' | \
-		xargs -I {} code --install-extension {} --force

@@ -56,6 +56,11 @@ if [ "$PLATFORM" = "mac" ]; then
     echo ""
     echo "Installing Mac packages from Brewfile..."
     brew bundle --verbose --file="$SCRIPT_DIR/mac/Brewfile" || echo "brew bundle hit some errors — run 'make brew' to retry."
+
+    # Enable Touch ID for sudo (works in Ghostty + tmux). Runs after brew so
+    # pam-reattach is available for the tmux path.
+    echo ""
+    "$SCRIPT_DIR/mac/enable-touchid-sudo.sh" || echo "Touch ID setup hit an error — run 'make touchid' to retry."
 fi
 
 # --- Linux: install packages ---

@@ -16,6 +16,9 @@ alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
 
+# Updating
+alias update='brew upgrade && brew update && mas update'
+
 # Colors
 alias grep='grep --color=auto'
 alias diff='diff --color=auto'

@@ -68,7 +68,7 @@ ifeq ($(OS),Darwin)
 	@sudo -v
 	@( while true; do sudo -n true; sleep 60; kill -0 $$$$ 2>/dev/null || exit; done ) & \
 		KEEPALIVE_PID=$$!; \
-		brew bundle --file=mac/Brewfile || { \
+		brew bundle --verbose --file=mac/Brewfile || { \
 			echo ""; \
 			echo "⚠ brew bundle hit errors. Retrying each item individually..."; \
 			echo ""; \

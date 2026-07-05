@@ -55,7 +55,7 @@ echo ""
 if [ "$PLATFORM" = "mac" ]; then
     echo ""
     echo "Installing Mac packages from Brewfile..."
-    brew bundle --file="$SCRIPT_DIR/mac/Brewfile" || echo "brew bundle hit some errors — run 'make brew' to retry."
+    brew bundle --verbose --file="$SCRIPT_DIR/mac/Brewfile" || echo "brew bundle hit some errors — run 'make brew' to retry."
 fi
 
 # --- Linux: install packages ---

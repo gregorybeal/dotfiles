@@ -55,15 +55,18 @@ resolve_path() {
 
 check_stow() {
     local target="$1" package="$2"
-    if [ -L "$target" ]; then
+    # Stow symlinks at the highest level it safely can — sometimes that's
+    # the file itself, sometimes an ancestor directory (e.g. .config/atuin
+    # as a whole, if nothing else lives there). Either is correctly
+    # stowed, so check whether the path *resolves* into this repo at all,
+    # not just whether the exact target is itself a symlink.
+    if [ -e "$target" ] || [ -L "$target" ]; then
         local resolved
         resolved="$(resolve_path "$target")"
         case "$resolved" in
             "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → ~/dotfiles/$package/..." ;;
-            *) warn "$target is a symlink, but doesn't resolve into ~/dotfiles/$package (got $resolved)" ;;
+            *) warn "$target exists, but doesn't resolve into ~/dotfiles/$package (got $resolved) — run: cd ~/dotfiles && stow $package" ;;
         esac
-    elif [ -e "$target" ]; then
-        warn "$target exists but isn't a symlink — run: cd ~/dotfiles && stow $package"
     else
         info "$target is missing — run: cd ~/dotfiles && stow $package"
     fi

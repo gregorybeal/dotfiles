@@ -33,6 +33,23 @@ section() {
 }
 
 # ─────────────────────────────────────────────────────────────
+#  Resolve a symlink to its canonical path — portable across GNU
+#  readlink (Linux, supports -f) and BSD readlink (macOS, doesn't).
+# ─────────────────────────────────────────────────────────────
+
+resolve_path() {
+    if command -v greadlink >/dev/null 2>&1; then
+        greadlink -f "$1" 2>/dev/null
+    elif readlink -f "$1" >/dev/null 2>&1; then
+        readlink -f "$1" 2>/dev/null
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$1" 2>/dev/null
+    else
+        readlink "$1" 2>/dev/null
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────
 #  Check: a target is a symlink resolving into this Stow repo
 # ─────────────────────────────────────────────────────────────
 
@@ -40,7 +57,7 @@ check_stow() {
     local target="$1" package="$2"
     if [ -L "$target" ]; then
         local resolved
-        resolved="$(readlink -f "$target" 2>/dev/null)"
+        resolved="$(resolve_path "$target")"
         case "$resolved" in
             "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → ~/dotfiles/$package/..." ;;
             *) warn "$target is a symlink, but doesn't resolve into ~/dotfiles/$package (got $resolved)" ;;

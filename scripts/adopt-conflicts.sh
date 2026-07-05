@@ -32,7 +32,7 @@ FOUND=0
 #     leftover chezmoi symlink_ target)
 CONFLICTS="$(stow --simulate -v -d "$DOTFILES" -t "$HOME" "${PACKAGES[@]}" 2>&1 \
     | sed -n \
-        -e 's/.*over existing target \(\S*\) since.*/\1/p' \
+        -e 's/.*over existing target \([^[:space:]]*\) since.*/\1/p' \
         -e 's/.*existing target is not owned by stow: *//p' \
     | sort -u)"
 

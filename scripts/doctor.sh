@@ -144,7 +144,7 @@ check_cmd bat "cat replacement"
 check_cmd fd "find replacement"
 check_cmd jq "JSON processor"
 check_cmd uv "Python toolchain"
-check_cmd atuin "shell history (installed but not wired into zsh — see README)"
+check_cmd atuin "shell history — Ctrl-R"
 
 # ─────────────────────────────────────────────────────────────
 section "Shell"

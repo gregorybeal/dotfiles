@@ -95,6 +95,14 @@ else
 	@echo "macos-defaults only runs on Mac"
 endif
 
+.PHONY: touchid
+touchid:  ## Enable Touch ID for sudo — works in Ghostty + tmux (Mac only)
+ifeq ($(OS),Darwin)
+	@./mac/enable-touchid-sudo.sh
+else
+	@echo "touchid only applies to macOS"
+endif
+
 .PHONY: doctor
 doctor:  ## Health check the dotfiles setup
 	@./scripts/doctor.sh

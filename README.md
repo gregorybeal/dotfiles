@@ -78,6 +78,7 @@ dotfiles/
 ├── linux/packages.sh            installs dev tools on Ubuntu/Debian (apt)
 ├── mac/Brewfile                 installs dev tools + GUI apps on Mac (brew bundle)
 ├── mac/macos-defaults.sh        applies macOS system preferences
+├── mac/enable-touchid-sudo.sh   enables Touch ID for sudo (run via `make touchid`)
 │
 ├── bootstrap.sh                  new machine setup — Mac + WSL/Linux
 └── Makefile                      short commands for common ops

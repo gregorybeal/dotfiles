@@ -99,10 +99,3 @@ function y() {
     [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
     command rm -f -- "$tmp"
 }
-
-# ---------- atuin (shell history) ----------
-# Sourced last so its Ctrl-R binding wins over fzf's (fzf's own shell
-# integration binds Ctrl-R earlier, near the top of .zshrc).
-if command -v atuin >/dev/null 2>&1; then
-  eval "$(atuin init zsh)"
-fi

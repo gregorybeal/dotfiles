@@ -26,5 +26,4 @@ zstyle ':fzf-tab:*' fzf-flags --height=60% --layout=reverse
 
 zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-history-substring-search
-zinit light jeffreytse/zsh-vi-mode
 zinit light zdharma-continuum/fast-syntax-highlighting

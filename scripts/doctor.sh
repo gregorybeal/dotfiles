@@ -234,6 +234,25 @@ if command -v tmux >/dev/null 2>&1; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+if [ "$OS" = "Darwin" ]; then
+section "Touch ID for sudo"
+# ─────────────────────────────────────────────────────────────
+
+    SUDO_LOCAL="/etc/pam.d/sudo_local"
+    if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+        ok "Touch ID enabled for sudo ($SUDO_LOCAL)"
+        # pam_reattach is what makes the prompt appear inside tmux.
+        if grep -q "pam_reattach.so" "$SUDO_LOCAL" 2>/dev/null; then
+            ok "pam_reattach configured (Touch ID works inside tmux)"
+        else
+            warn "pam_reattach not configured — Touch ID won't prompt inside tmux. Run: make brew && make touchid"
+        fi
+    else
+        info "Touch ID for sudo not enabled — run: make touchid"
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "reg-tool"
 # ─────────────────────────────────────────────────────────────
 

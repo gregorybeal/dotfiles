@@ -92,3 +92,53 @@ dotfiles/
 - `~/.bashrc.local` — extra bash config
 - `~/.ssh/config.local` — extra SSH config, included automatically
 - `~/.secrets` — env vars / tokens (sourced by both zsh + bash)
+
+## tmux keybindings
+
+The **prefix is `` ` ``** (backtick, remapped from `C-b`). Press it twice to type a literal backtick. Sessions auto-save and restore across reboots (resurrect + continuum), and the left of the status bar shows a `PREFIX` / `COPY` / `Sync` indicator when those modes are active.
+
+**Panes**
+
+| Key | Action |
+|-----|--------|
+| `` ` `` `\|` / `` ` `` `-` | Split right / split down (inherits current dir) |
+| `` ` `` `h` `j` `k` `l` | Move between panes (vim directions) |
+| `Ctrl`+`h` `j` `k` `l` | Move between panes **and** nvim splits (no prefix — vim-tmux-navigator) |
+| `` ` `` `H` `J` `K` `L` | Resize pane (repeatable) |
+| `` ` `` `S` | Toggle synchronized input to **all** panes |
+| `` ` `` `f` / `` ` `` `C-f` | Toggle floating pane (floax) / its menu |
+
+**Windows**
+
+| Key | Action |
+|-----|--------|
+| `` ` `` `c` | New window (inherits current dir) |
+| `Alt`+`h` / `Alt`+`l` | Previous / next window (no prefix) |
+
+**Popups & pickers**
+
+| Key | Action |
+|-----|--------|
+| `` ` `` `g` | Floating scratch shell in the current dir |
+| `` ` `` `T` | **sesh** session picker over zoxide dirs + live sessions *(Mac: needs `sesh`)* |
+| `` ` `` `Tab` | **extrakto** — fuzzy-grab paths / URLs / words off the screen |
+| `` ` `` `u` | fzf over URLs visible in the pane, open one |
+| `` ` `` `F` | **tmux-fzf** — fuzzy menu over sessions / windows / panes / commands |
+| `` ` `` `m` | **tmux-menus** — popup command menu |
+| `` ` `` `P` | **1Password** item picker *(Mac: needs the `op` CLI)* |
+
+**Copy mode (vi-style)**
+
+| Key | Action |
+|-----|--------|
+| `` ` `` `[` | Enter copy mode |
+| `v` / `Ctrl`+`v` | Begin selection / toggle rectangle selection |
+| `y` or `Enter` | Copy to system clipboard (OS-aware; falls back to OSC 52 over SSH) |
+| Mouse drag | Select and copy |
+
+**Misc**
+
+| Key | Action |
+|-----|--------|
+| `` ` `` `r` | Reload `~/.tmux.conf` |
+| `` ` `` `I` / `U` / `Alt`+`u` | TPM: install / update / remove plugins |

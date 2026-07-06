@@ -1,2 +1,4 @@
 .claude/
 .zcompdump*
+ssh/registers
+.DS_Store

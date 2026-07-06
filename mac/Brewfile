@@ -22,6 +22,7 @@ tap "Sanyam-G/switch"
 brew "zsh"
 brew "tmux"
 brew "pam-reattach"  # lets Touch ID for sudo prompt inside tmux (see mac/enable-touchid-sudo.sh)
+brew "sesh"          # smart tmux session manager (prefix+T picker; uses zoxide+fzf)
 brew "stow"
 brew "git"
 brew "gh"

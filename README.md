@@ -92,7 +92,3 @@ dotfiles/
 - `~/.bashrc.local` — extra bash config
 - `~/.ssh/config.local` — extra SSH config, included automatically
 - `~/.secrets` — env vars / tokens (sourced by both zsh + bash)
-
-## Chezmoi predecessor
-
-This repo replaced a [chezmoi](https://chezmoi.io)-managed setup (still present, untouched, at `~/.local/share/chezmoi` on machines that had it — kept as a historical reference, not actively used). Chezmoi's templating (per-machine git identity, OS-conditional files) has no Stow equivalent; see `~/.gitconfig.local` above for how that's handled instead.

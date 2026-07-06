@@ -4,7 +4,7 @@
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
 
-CORE_PACKAGES := zsh bash aliases git ssh tmux starship ghostty atuin btop reg-tool powershell
+CORE_PACKAGES := zsh bash aliases git ssh tmux nvim starship ghostty atuin btop reg-tool powershell
 MAC_PACKAGES  := karabiner keyboardcowboy 1password
 
 .DEFAULT_GOAL := help

@@ -33,22 +33,42 @@ section() {
 }
 
 # ─────────────────────────────────────────────────────────────
-#  Check: symlinks point at the dotfiles repo
+#  Resolve a symlink to its canonical path — portable across GNU
+#  readlink (Linux, supports -f) and BSD readlink (macOS, doesn't).
 # ─────────────────────────────────────────────────────────────
 
-check_link() {
-    local target="$1" expected_prefix="$2"
-    if [ -L "$target" ]; then
-        local actual
-        actual=$(readlink "$target")
-        case "$actual" in
-            *"$expected_prefix"*) ok "$target → $actual" ;;
-            *) warn "$target is a symlink, but points to $actual (expected $expected_prefix)" ;;
-        esac
-    elif [ -e "$target" ]; then
-        warn "$target exists but isn't a symlink (was install.sh run?)"
+resolve_path() {
+    if command -v greadlink >/dev/null 2>&1; then
+        greadlink -f "$1" 2>/dev/null
+    elif readlink -f "$1" >/dev/null 2>&1; then
+        readlink -f "$1" 2>/dev/null
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$1" 2>/dev/null
     else
-        fail "$target is missing"
+        readlink "$1" 2>/dev/null
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────
+#  Check: a target is a symlink resolving into this Stow repo
+# ─────────────────────────────────────────────────────────────
+
+check_stow() {
+    local target="$1" package="$2"
+    # Stow symlinks at the highest level it safely can — sometimes that's
+    # the file itself, sometimes an ancestor directory (e.g. .config/atuin
+    # as a whole, if nothing else lives there). Either is correctly
+    # stowed, so check whether the path *resolves* into this repo at all,
+    # not just whether the exact target is itself a symlink.
+    if [ -e "$target" ] || [ -L "$target" ]; then
+        local resolved
+        resolved="$(resolve_path "$target")"
+        case "$resolved" in
+            "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → ~/dotfiles/$package/..." ;;
+            *) warn "$target exists, but doesn't resolve into ~/dotfiles/$package (got $resolved) — run: cd ~/dotfiles && stow $package" ;;
+        esac
+    else
+        info "$target is missing — run: cd ~/dotfiles && stow $package"
     fi
 }
 
@@ -78,17 +98,29 @@ echo "  OS:   $OS"
 echo "  Repo: $DOTFILES"
 
 # ─────────────────────────────────────────────────────────────
-section "Dotfile symlinks"
+section "Stow packages"
 # ─────────────────────────────────────────────────────────────
 
-check_link "$HOME/.zshrc" "dotfiles/shell"
-check_link "$HOME/.bashrc" "dotfiles/shell"
-check_link "$HOME/.aliases.sh" "dotfiles/shell"
-check_link "$HOME/.tmux.conf" "dotfiles/tmux"
-check_link "$HOME/.gitconfig" "dotfiles/git"
-check_link "$HOME/.ssh/config" "dotfiles/ssh"
-check_link "$HOME/.config/starship.toml" "dotfiles/starship"
-check_link "$HOME/.config/reg-tool/reg.sh" "dotfiles/reg-tool"
+check_stow "$HOME/.zshenv" "zsh"
+check_stow "$HOME/.zshrc" "zsh"
+check_stow "$HOME/.zsh" "zsh"
+check_stow "$HOME/.bashrc" "bash"
+check_stow "$HOME/.aliases.sh" "aliases"
+check_stow "$HOME/.gitconfig" "git"
+check_stow "$HOME/.ssh/config" "ssh"
+check_stow "$HOME/.tmux.conf" "tmux"
+check_stow "$HOME/.config/starship.toml" "starship"
+check_stow "$HOME/.config/ghostty/config" "ghostty"
+check_stow "$HOME/.config/atuin/config.toml" "atuin"
+check_stow "$HOME/.config/btop/btop.conf" "btop"
+check_stow "$HOME/.config/reg-tool/reg.sh" "reg-tool"
+check_stow "$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1" "powershell"
+
+if [ "$OS" = "Darwin" ]; then
+    check_stow "$HOME/.config/karabiner/karabiner.json" "karabiner"
+    check_stow "$HOME/.config/keyboardcowboy/config.json" "keyboardcowboy"
+    check_stow "$HOME/.config/1Password/ssh/agent.toml" "1password"
+fi
 
 # ─────────────────────────────────────────────────────────────
 section "Core CLI tools"
@@ -99,6 +131,7 @@ check_cmd gh "GitHub CLI"
 check_cmd ssh "SSH client"
 check_cmd tmux "terminal multiplexer"
 check_cmd starship "prompt"
+check_cmd stow "GNU Stow (dotfiles deployment)"
 
 # ─────────────────────────────────────────────────────────────
 section "Modern CLI tools"
@@ -110,6 +143,7 @@ check_cmd bat "cat replacement"
 check_cmd fd "find replacement"
 check_cmd jq "JSON processor"
 check_cmd uv "Python toolchain"
+check_cmd atuin "shell history — Ctrl-R"
 
 # ─────────────────────────────────────────────────────────────
 section "Shell"
@@ -123,10 +157,22 @@ else
     warn "Unknown shell"
 fi
 
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    ok "Oh My Zsh installed"
+if [ -d "$HOME/.local/share/zinit" ]; then
+    ok "zinit/zsh plugins installed"
 else
-    info "Oh My Zsh not installed (skip if you don't use zsh)"
+    info "zinit not installed yet (self-installs on first zsh launch)"
+fi
+
+if [ -d "$HOME/.local/state/zsh" ]; then
+    ok "~/.local/state/zsh exists (zsh history)"
+else
+    warn "~/.local/state/zsh missing — HISTFILE can't be written. Run: make dirs"
+fi
+
+if [ -d "$HOME/.cache/zsh" ]; then
+    ok "~/.cache/zsh exists (completion cache)"
+else
+    warn "~/.cache/zsh missing — compinit dump can't be cached. Run: make dirs"
 fi
 
 # ─────────────────────────────────────────────────────────────
@@ -136,7 +182,7 @@ section "SSH"
 if [ -d "$HOME/.ssh/sockets" ]; then
     ok "~/.ssh/sockets directory exists (ControlMaster)"
 else
-    info "~/.ssh/sockets missing (only needed if ControlMaster enabled)"
+    warn "~/.ssh/sockets missing — ControlMaster is enabled in ssh/.ssh/config and needs this. Run: make dirs"
 fi
 
 if [ -f "$HOME/.ssh/id_ed25519" ] || [ -f "$HOME/.ssh/id_rsa" ]; then
@@ -166,6 +212,16 @@ if command -v gh >/dev/null 2>&1; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+section "Git identity"
+# ─────────────────────────────────────────────────────────────
+
+if [ -f "$HOME/.gitconfig.local" ]; then
+    ok "~/.gitconfig.local present"
+else
+    warn "~/.gitconfig.local missing — run: ./scripts/setup-local.sh"
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "tmux"
 # ─────────────────────────────────────────────────────────────
 
@@ -178,13 +234,32 @@ if command -v tmux >/dev/null 2>&1; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+if [ "$OS" = "Darwin" ]; then
+section "Touch ID for sudo"
+# ─────────────────────────────────────────────────────────────
+
+    SUDO_LOCAL="/etc/pam.d/sudo_local"
+    if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+        ok "Touch ID enabled for sudo ($SUDO_LOCAL)"
+        # pam_reattach is what makes the prompt appear inside tmux.
+        if grep -q "pam_reattach.so" "$SUDO_LOCAL" 2>/dev/null; then
+            ok "pam_reattach configured (Touch ID works inside tmux)"
+        else
+            warn "pam_reattach not configured — Touch ID won't prompt inside tmux. Run: make brew && make touchid"
+        fi
+    else
+        info "Touch ID for sudo not enabled — run: make touchid"
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "reg-tool"
 # ─────────────────────────────────────────────────────────────
 
 if [ -f "$HOME/.config/reg-tool/config" ]; then
     ok "reg-tool config present"
 else
-    warn "reg-tool config missing — copy from config.example and edit"
+    warn "reg-tool config missing — run: ./scripts/setup-local.sh"
 fi
 
 if [ -f "$HOME/.config/reg-tool/registers.csv" ]; then

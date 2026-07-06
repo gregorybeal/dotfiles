@@ -2,9 +2,9 @@
 # scripts/adopt-conflicts.sh — move pre-existing files/symlinks out of the
 # way of Stow before it runs, so a single conflict (e.g. Ubuntu's default
 # skel ~/.bashrc, a manually-configured ~/.config/ghostty/config from before
-# you adopted this repo, or — the case this was missing — a leftover real
-# symlink from the old chezmoi setup pointing into its source repo instead
-# of this one) doesn't abort deployment of every package. Stow itself is
+# you adopted this repo, or a leftover real symlink from some other dotfiles
+# manager pointing into its own source repo instead of this one) doesn't
+# abort deployment of every package. Stow itself is
 # all-or-nothing per invocation: if ANY target conflicts, it aborts
 # EVERYTHING, not just the conflicting package.
 #
@@ -29,7 +29,7 @@ FOUND=0
 #     link nor a directory and --adopt not specified      (a real file/dir)
 #   existing target is not owned by stow: REL              (a symlink —
 #     valid or dangling — that doesn't point into this repo, e.g. a
-#     leftover chezmoi symlink_ target)
+#     leftover symlink from another dotfiles manager)
 CONFLICTS="$(stow --simulate -v -d "$DOTFILES" -t "$HOME" "${PACKAGES[@]}" 2>&1 \
     | sed -n \
         -e 's/.*over existing target \([^[:space:]]*\) since.*/\1/p' \

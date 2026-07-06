@@ -2,3 +2,7 @@
 .zcompdump*
 ssh/registers
 .DS_Store
+
+# Stray binaries — the repo manages configs, not installed tools.
+# (a 43MB chezmoi binary got committed here by accident once)
+.local/

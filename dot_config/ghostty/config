@@ -98,7 +98,8 @@ window-save-state = always
 macos-titlebar-style = native
 
 # Follow the system light/dark mode
-window-theme = system
+# window-theme = system
+window-theme = dark
 
 # Default window size (columns x rows) for new windows
 window-width = 140
@@ -189,6 +190,9 @@ keybind = cmd+shift+comma=reload_config
 
 # Clear scrollback + screen
 keybind = cmd+k=clear_screen
+
+# Enable touch id for sudo operations on MacOS
+macos-auto-secure-input = false
 
 # ───────────────────────────────────────────────────────────────
 #  Notes

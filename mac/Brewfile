@@ -135,6 +135,8 @@ cask "stats"                # menu bar system stats
 cask "betterdisplay"        # control external monitor brightness from Mac
 cask "autodesk-fusion"   # 3D modeling (free for personal use)
 cask "hyperkey"              # remap caps lock to hyper key (ctrl+alt+cmd)
+cask "macusb"
+
 
 # ─────────────────────────────────────────────────────────────
 #  Mac App Store apps
@@ -159,6 +161,7 @@ mas "Folder Peek", id: 1615988943
 mas "Pixelmator Pro", id: 1289583905
 mas "Velja", id: 1607635845
 mas "Dropover", id: 1355679052
+mas "Mic Drop", id: 1489816366
 
 # ─────────────────────────────────────────────────────────────
 #  uv-managed Python CLI tools

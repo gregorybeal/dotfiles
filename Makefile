@@ -4,6 +4,9 @@
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
 
+CORE_PACKAGES := zsh bash aliases git ssh tmux starship ghostty atuin btop reg-tool powershell
+MAC_PACKAGES  := karabiner keyboardcowboy 1password
+
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -16,12 +19,35 @@ help:  ## Show this help
 	@echo ""
 
 .PHONY: bootstrap
-bootstrap:  ## Full setup on new machine (installs chezmoi + applies dotfiles)
+bootstrap:  ## Full setup on new machine (installs Stow + stows + installs packages)
 	@./bootstrap.sh
 
-.PHONY: bootstrap-nosudo
-bootstrap-nosudo:  ## Full setup on restricted Linux box (no sudo)
-	@./bootstrap-nosudo.sh
+.PHONY: dirs
+dirs:  ## Create runtime data dirs Stow doesn't manage (zsh cache/state, ssh sockets)
+	@mkdir -p "$(HOME)/.local/state/zsh"
+	@mkdir -p "$(HOME)/.cache/zsh"
+	@mkdir -p "$(HOME)/.ssh/sockets"
+	@chmod 700 "$(HOME)/.ssh/sockets"
+
+.PHONY: stow
+stow: dirs  ## Symlink all packages for this OS into $$HOME (idempotent)
+	@./scripts/adopt-conflicts.sh $(CORE_PACKAGES)
+	@stow -v $(CORE_PACKAGES)
+ifeq ($(OS),Darwin)
+	@./scripts/adopt-conflicts.sh $(MAC_PACKAGES)
+	@stow -v $(MAC_PACKAGES)
+endif
+
+.PHONY: unstow
+unstow:  ## Remove all package symlinks from $$HOME
+	@stow -D -v $(CORE_PACKAGES)
+ifeq ($(OS),Darwin)
+	@stow -D -v $(MAC_PACKAGES)
+endif
+
+.PHONY: setup-local
+setup-local:  ## Create machine-local config (git identity, reg-tool config)
+	@./scripts/setup-local.sh
 
 .PHONY: linux-packages
 linux-packages:  ## Install Linux packages — Ubuntu/Debian with sudo (idempotent)
@@ -34,7 +60,7 @@ ifeq ($(OS),Darwin)
 	@sudo -v
 	@( while true; do sudo -n true; sleep 60; kill -0 $$$$ 2>/dev/null || exit; done ) & \
 		KEEPALIVE_PID=$$!; \
-		brew bundle --file=mac/Brewfile || { \
+		brew bundle --verbose --file=mac/Brewfile || { \
 			echo ""; \
 			echo "⚠ brew bundle hit errors. Retrying each item individually..."; \
 			echo ""; \
@@ -44,7 +70,6 @@ ifeq ($(OS),Darwin)
 					brew\ *) name=$$(echo "$$line" | sed -E 's/^brew[[:space:]]+"([^"]+)".*/\1/'); brew install "$$name" 2>/dev/null || echo "  ✗ brew: $$name" ;; \
 					cask\ *) name=$$(echo "$$line" | sed -E 's/^cask[[:space:]]+"([^"]+)".*/\1/'); brew install --cask "$$name" 2>/dev/null || echo "  ✗ cask: $$name" ;; \
 					mas\ *) id=$$(echo "$$line" | sed -E 's/.*id:[[:space:]]*([0-9]+).*/\1/'); mas install "$$id" 2>/dev/null || echo "  ✗ mas: $$id" ;; \
-					vscode\ *) name=$$(echo "$$line" | sed -E 's/^vscode[[:space:]]+"([^"]+)".*/\1/'); code --install-extension "$$name" --force 2>/dev/null || echo "  ✗ vscode: $$name" ;; \
 					uv\ *) name=$$(echo "$$line" | sed -E 's/^uv[[:space:]]+"([^"]+)".*/\1/'); uv tool install "$$name" 2>/dev/null || echo "  ✗ uv: $$name" ;; \
 				esac; \
 			done; \
@@ -62,17 +87,6 @@ else
 	@echo "brew bundle only runs on Mac"
 endif
 
-.PHONY: brew-cleanup
-brew-cleanup:  ## Remove brew packages NOT in Brewfile (DANGEROUS — dry-run first)
-ifeq ($(OS),Darwin)
-	@echo "Dry run — these would be removed:"
-	@brew bundle cleanup --file=mac/Brewfile
-	@echo ""
-	@echo "Run 'brew bundle cleanup --file=mac/Brewfile --force' to actually remove."
-else
-	@echo "brew bundle only runs on Mac"
-endif
-
 .PHONY: macos-defaults
 macos-defaults:  ## Apply macOS system preferences (Mac only)
 ifeq ($(OS),Darwin)
@@ -81,19 +95,24 @@ else
 	@echo "macos-defaults only runs on Mac"
 endif
 
+.PHONY: touchid
+touchid:  ## Enable Touch ID for sudo — works in Ghostty + tmux (Mac only)
+ifeq ($(OS),Darwin)
+	@./mac/enable-touchid-sudo.sh
+else
+	@echo "touchid only applies to macOS"
+endif
+
 .PHONY: doctor
 doctor:  ## Health check the dotfiles setup
 	@./scripts/doctor.sh
 
 .PHONY: update
-update:  ## Pull latest changes and re-apply dotfiles
-	@chezmoi update
+update:  ## Pull latest changes and re-stow
+	@git pull
+	@$(MAKE) stow
 
 .PHONY: reg-refresh
 reg-refresh:  ## Refresh register inventory CSV from SQLite
 	@uv run ~/.config/reg-tool/refresh.py
 
-.PHONY: vscode-ext
-vscode-ext:  ## Install all VS Code extensions
-	@cat vscode/extensions.txt | grep -vE '^\s*(#|$$)' | \
-		xargs -I {} code --install-extension {} --force

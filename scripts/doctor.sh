@@ -175,6 +175,23 @@ else
     warn "~/.cache/zsh missing — compinit dump can't be cached. Run: make dirs"
 fi
 
+# Homebrew creates share/zsh group-writable, which makes compinit refuse to
+# load its completions ("insecure directories"). Flag it with the exact fix.
+if command -v brew >/dev/null 2>&1; then
+    brew_prefix="$(brew --prefix 2>/dev/null)"
+    insecure_zdirs=""
+    for d in "$brew_prefix/share/zsh" "$brew_prefix/share/zsh/site-functions"; do
+        if [ -d "$d" ] && find "$d" -maxdepth 0 \( -perm -0020 -o -perm -0002 \) 2>/dev/null | grep -q .; then
+            insecure_zdirs="$insecure_zdirs $d"
+        fi
+    done
+    if [ -n "$insecure_zdirs" ]; then
+        warn "Homebrew zsh completion dirs are group/other-writable (compinit skips them) — run: chmod g-w,o-w$insecure_zdirs"
+    else
+        ok "Homebrew zsh completion dirs are compinit-safe"
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────
 section "SSH"
 # ─────────────────────────────────────────────────────────────

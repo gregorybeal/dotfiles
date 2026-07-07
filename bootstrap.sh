@@ -57,6 +57,15 @@ if [ "$PLATFORM" = "mac" ]; then
     echo "Installing Mac packages from Brewfile..."
     brew bundle --verbose --file="$SCRIPT_DIR/mac/Brewfile" || echo "brew bundle hit some errors — run 'make brew' to retry."
 
+    # Harden Homebrew's zsh completion dirs. Homebrew creates share/zsh
+    # group-writable, which makes zsh's compinit refuse to load completions
+    # from it ("insecure directories" warning on every shell start). Strip the
+    # group/other write bits so the default (secure) compinit works.
+    brew_prefix="$(brew --prefix 2>/dev/null)"
+    if [ -n "$brew_prefix" ]; then
+        chmod g-w,o-w "$brew_prefix/share/zsh" "$brew_prefix/share/zsh/site-functions" 2>/dev/null || true
+    fi
+
     # Enable Touch ID for sudo (works in Ghostty + tmux). Runs after brew so
     # pam-reattach is available for the tmux path.
     echo ""

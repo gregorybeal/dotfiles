@@ -27,3 +27,10 @@ zstyle ':fzf-tab:*' fzf-flags --height=60% --layout=reverse
 zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-history-substring-search
 zinit light zdharma-continuum/fast-syntax-highlighting
+
+# zsh-vi-mode must load last — it wraps zle widgets (autosuggestions,
+# history-substring-search, etc.) and resets bindings on init. Its
+# ZVM_* config lives in bindings.zsh, sourced before this file; custom
+# keybindings that need to survive its reset are re-registered via the
+# zvm_after_init hook, also in bindings.zsh.
+zinit light jeffreytse/zsh-vi-mode

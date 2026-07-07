@@ -62,6 +62,10 @@ brew "sshpass"
 brew "node"                 # for occasional npm tools
 brew "ansible"              # if you ever run from Mac
 brew "sqlite"               # cli for your reg-tool DB
+brew "lazygit"
+brew "lazysql"
+brew "Adembc/homebrew-tap/lazyssh"
+brew "yazi"
 
 # Mac App Store CLI (required for `mas` lines below)
 brew "mas"

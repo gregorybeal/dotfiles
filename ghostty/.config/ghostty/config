@@ -73,11 +73,8 @@ background-blur-radius = 15
 #  Cursor
 # ───────────────────────────────────────────────────────────────
 
-cursor-style = bar
+cursor-style = block
 cursor-style-blink = true
-
-# Make the cursor easier to find — slightly thicker bar
-adjust-cursor-thickness = 1
 
 # Neovide-style "warp" trail: the cursor smears/stretches toward its new
 # position instead of teleporting. Shader source + tunables (color, size,

@@ -79,6 +79,17 @@ cursor-style-blink = true
 # Make the cursor easier to find — slightly thicker bar
 adjust-cursor-thickness = 1
 
+# Neovide-style "warp" trail: the cursor smears/stretches toward its new
+# position instead of teleporting. Shader source + tunables (color, size,
+# duration, easing curve) live in shaders/cursor_warp.glsl.
+# From: https://github.com/sahaj-b/ghostty-cursor-shaders
+custom-shader = shaders/cursor_warp.glsl
+
+# Keep the trail animating even when using a line/underline cursor style
+# (bar cursor with blink already keeps the animation loop alive, but this
+# guards against it freezing on unfocus).
+custom-shader-animation = always
+
 # ───────────────────────────────────────────────────────────────
 #  Window
 # ───────────────────────────────────────────────────────────────

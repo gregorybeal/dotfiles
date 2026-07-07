@@ -64,11 +64,11 @@ check_stow() {
         local resolved
         resolved="$(resolve_path "$target")"
         case "$resolved" in
-            "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → ~/dotfiles/$package/..." ;;
-            *) warn "$target exists, but doesn't resolve into ~/dotfiles/$package (got $resolved) — run: cd ~/dotfiles && stow $package" ;;
+            "$DOTFILES/$package"/*|"$DOTFILES/$package") ok "$target → $DOTFILES/$package/..." ;;
+            *) warn "$target exists, but doesn't resolve into $DOTFILES/$package (got $resolved) — run: cd $DOTFILES && stow $package" ;;
         esac
     else
-        info "$target is missing — run: cd ~/dotfiles && stow $package"
+        info "$target is missing — run: cd $DOTFILES && stow $package"
     fi
 }
 

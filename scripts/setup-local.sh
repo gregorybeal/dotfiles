@@ -44,5 +44,22 @@ else
     echo "reg-tool config already present ($REG_CONFIG) — skipping"
 fi
 
+# ─────────────────────────────────────────────────────────────
+#  jira-cli config (~/.config/.jira/.config.yml)
+#  Kept out of the (public) repo — it holds your Jira URL + login.
+# ─────────────────────────────────────────────────────────────
+
+JIRA_CONFIG_DIR="$HOME/.config/.jira"
+JIRA_CONFIG="$JIRA_CONFIG_DIR/.config.yml"
+if [ ! -f "$JIRA_CONFIG" ]; then
+    mkdir -p "$JIRA_CONFIG_DIR"
+    cp "$DOTFILES/jira/config.example" "$JIRA_CONFIG"
+    chmod 600 "$JIRA_CONFIG"
+    echo "[jira-cli] Created $JIRA_CONFIG — edit server/login/project, or run 'jira init'"
+    echo "           to auto-generate it. Set 'export JIRA_API_TOKEN=...' in ~/.secrets."
+else
+    echo "jira-cli config already present ($JIRA_CONFIG) — skipping"
+fi
+
 echo ""
 echo "Done."

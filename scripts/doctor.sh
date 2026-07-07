@@ -287,6 +287,25 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+if command -v jira >/dev/null 2>&1; then
+section "jira-cli"
+# ─────────────────────────────────────────────────────────────
+
+    JIRA_CONFIG="${JIRA_CONFIG_FILE:-$HOME/.config/.jira/.config.yml}"
+    if [ -f "$JIRA_CONFIG" ]; then
+        ok "config present ($JIRA_CONFIG)"
+    else
+        warn "config missing — run: jira init  (or ./scripts/setup-local.sh for a template)"
+    fi
+
+    if [ -n "$JIRA_API_TOKEN" ]; then
+        ok "JIRA_API_TOKEN is set"
+    else
+        warn "JIRA_API_TOKEN not set — add 'export JIRA_API_TOKEN=...' to ~/.secrets"
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "Dotfiles repo state"
 # ─────────────────────────────────────────────────────────────
 

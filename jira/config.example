@@ -1,0 +1,75 @@
+# jira-cli config — https://github.com/ankitpokhrel/jira-cli
+#
+# TEMPLATE. Your real config lives at ~/.config/.jira/.config.yml and is NOT
+# committed (this repo is public; server URL + login are personal). On a new
+# machine, scripts/setup-local.sh copies this file into place.
+#
+# EASIEST setup: run `jira init` instead of hand-editing — it queries your Jira
+# instance and fills in board id, custom fields, epic field names, and issue
+# types automatically. Edit this file only if you prefer to, or for on-premise
+# tweaks jira init can't infer.
+#
+# The API TOKEN is never stored here. Put it in ~/.secrets (already sourced by
+# .zshrc), e.g.:   export JIRA_API_TOKEN="your-token"
+# Cloud tokens: https://id.atlassian.com/manage-profile/security/api-tokens
+# On-prem PATs also need:   export JIRA_AUTH_TYPE=bearer
+
+# "Cloud" for *.atlassian.net; "Local" for on-premise (Server / Data Center).
+installation: Cloud
+
+# Your Jira base URL.
+server: https://your-company.atlassian.net
+
+# Email (Cloud) or username (on-premise) you authenticate as.
+login: you@example.com
+
+# basic (default) | bearer (on-prem PAT — also set JIRA_AUTH_TYPE=bearer) | mtls
+auth_type: basic
+
+project:
+  key: PROJ            # project key, e.g. ENG
+  type: classic        # classic | nextgen
+
+board:
+  id: 1                # numeric board id (jira init discovers this)
+  name: PROJ board
+
+# Epic field names — usually auto-detected. Set manually for on-premise or
+# non-English Jira where jira init can't infer them.
+epic:
+  name: Epic Name
+  link: Epic Link
+
+issue:
+  # Issue types in your project. `handle` aliases a (possibly custom) type name.
+  types:
+    - name: Bug
+      handle: Bug
+    - name: Story
+      handle: Story
+    - name: Task
+      handle: Task
+    - name: Epic
+      handle: Epic
+    - name: Sub-task
+      handle: Sub-task
+  # Custom fields to expose on issue/board views. Each needs the Jira field key
+  # (customfield_XXXXX) and datatype — `jira init` fills these in for you.
+  fields:
+    custom: []
+    #   - name: Story Points
+    #     key: customfield_10016
+    #     schema:
+    #       datatype: number
+
+# IANA timezone for date rendering.
+timezone: America/New_York
+
+# On-premise with a self-signed cert only — skip TLS verification.
+# insecure: false
+
+# Client-certificate auth (auth_type: mtls).
+# mtls:
+#   ca_cert: /path/to/ca.pem
+#   client_cert: /path/to/client.pem
+#   client_key: /path/to/client.key

@@ -113,7 +113,6 @@ check_stow "$HOME/.config/starship.toml" "starship"
 check_stow "$HOME/.config/ghostty/config" "ghostty"
 check_stow "$HOME/.config/atuin/config.toml" "atuin"
 check_stow "$HOME/.config/btop/btop.conf" "btop"
-check_stow "$HOME/.config/reg-tool/reg.sh" "reg-tool"
 check_stow "$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1" "powershell"
 
 if [ "$OS" = "Darwin" ]; then
@@ -270,20 +269,21 @@ section "Touch ID for sudo"
 fi
 
 # ─────────────────────────────────────────────────────────────
-section "reg-tool"
+section "registers"
 # ─────────────────────────────────────────────────────────────
 
-if [ -f "$HOME/.config/reg-tool/config" ]; then
-    ok "reg-tool config present"
+REG_CONF="${REG_CONF:-$HOME/.ssh/conf.d/registers}"
+if [ -f "$REG_CONF" ]; then
+    COUNT=$(awk '/^Host / && $2 !~ /[?*]/' "$REG_CONF" | wc -l | tr -d ' ')
+    ok "register inventory present ($COUNT hosts)"
 else
-    warn "reg-tool config missing — run: ./scripts/setup-local.sh"
+    info "no register inventory — generate: scripts/gen_ssh_registers.py --db <db> --user <user>"
 fi
 
-if [ -f "$HOME/.config/reg-tool/registers.csv" ]; then
-    COUNT=$(grep -cvE '^\s*(#|$)' "$HOME/.config/reg-tool/registers.csv" || echo 0)
-    ok "registers.csv present ($COUNT registers)"
+if command -v sshfs >/dev/null 2>&1; then
+    ok "sshfs present (fmount)"
 else
-    info "registers.csv not generated yet — run: reg-refresh"
+    info "sshfs not installed — fmount unavailable"
 fi
 
 # ─────────────────────────────────────────────────────────────

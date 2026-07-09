@@ -29,20 +29,6 @@ else
     echo "git identity already set up ($GITCONFIG_LOCAL exists) — skipping"
 fi
 
-# ─────────────────────────────────────────────────────────────
-#  reg-tool config (~/.config/reg-tool/config)
-# ─────────────────────────────────────────────────────────────
-
-REG_CONFIG_DIR="$HOME/.config/reg-tool"
-REG_CONFIG="$REG_CONFIG_DIR/config"
-if [ ! -f "$REG_CONFIG" ]; then
-    mkdir -p "$REG_CONFIG_DIR"
-    cp "$DOTFILES/reg-tool/config.example" "$REG_CONFIG"
-    chmod 600 "$REG_CONFIG"
-    echo "[reg-tool] Created $REG_CONFIG — edit it to set your jumpbox and SQLite paths."
-else
-    echo "reg-tool config already present ($REG_CONFIG) — skipping"
-fi
 
 # ─────────────────────────────────────────────────────────────
 #  jira-cli config (~/.config/.jira/.config.yml)

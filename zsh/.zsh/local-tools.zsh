@@ -88,6 +88,29 @@ _reg_db_store() {
     return 1
 }
 
+_reg_db_cols() {
+    sqlite3 -readonly "$_REG_DB" "PRAGMA table_info('$1');" 2>/dev/null | awk -F'|' '{print $2}'
+}
+
+_reg_db_has_col() {
+    local -a cols; cols=(${(f)"$(_reg_db_cols "$1")"})
+    (( ${cols[(I)$2]} ))
+}
+
+# A quoted, comma-separated column list for <table>, minus bookkeeping columns
+# nobody wants staring at them in a preview pane. Still schema-agnostic: it
+# names what to *hide*, never what to show.
+_reg_db_sel() {
+    local c out=""
+    local -a skip=(id rowid sync_lock last_updated)
+    for c in ${(f)"$(_reg_db_cols "$1")"}; do
+        (( ${skip[(Ie)${c:l}]} )) && continue
+        out+="${out:+, }\\\"$c\\\""
+    done
+    [[ -n $out ]] || return 1
+    print -r -- "$out"
+}
+
 # Sets `reply` to the fzf preview flags, or leaves it empty when there is no
 # database, no sqlite3, or no table that looks like an inventory. A missing
 # table is a configuration fact, not a per-keystroke error, so it produces no
@@ -115,14 +138,27 @@ _reg_preview_args() {
     hostc=${${schema#*$'\t'}%%$'\t'*}
 
     local db=${(q)_REG_DB}
-    local regq="sqlite3 -readonly -line $db \"SELECT * FROM \\\"$tbl\\\" WHERE \\\"$hostc\\\"='\$h';\""
+    local regsel; regsel=$(_reg_db_sel "$tbl") || regsel='*'
+    local regq="sqlite3 -readonly -line $db \"SELECT $regsel FROM \\\"$tbl\\\" WHERE \\\"$hostc\\\"='\$h';\""
 
     # The store join is optional: plenty of inventories have no stores table.
-    local storeq="" sschema stbl skey
+    local storeq="" sschema stbl skey storesel where
     if sschema=$(_reg_db_store); then
         stbl=${sschema%%$'\t'*}
         skey=${sschema##*$'\t'}
-        storeq="s=\$(sqlite3 -readonly -line $db \"SELECT * FROM \\\"$stbl\\\" WHERE \\\"$skey\\\"=substr('\$h',1,4);\"); \
+        storesel=$(_reg_db_sel "$stbl") || storesel='*'
+
+        # Prefer a real foreign key on the register row over deriving the store
+        # from the hostname prefix. The prefix form only matches by accident when
+        # the key column is INTEGER (affinity turns '0004' into 4), and it assumes
+        # the NNNNregNN naming holds.
+        if _reg_db_has_col "$tbl" "$skey"; then
+            where="\\\"$skey\\\"=(SELECT \\\"$skey\\\" FROM \\\"$tbl\\\" WHERE \\\"$hostc\\\"='\$h')"
+        else
+            where="\\\"$skey\\\"=substr('\$h',1,4)"
+        fi
+
+        storeq="s=\$(sqlite3 -readonly -line $db \"SELECT $storesel FROM \\\"$stbl\\\" WHERE $where;\"); \
                 [ -n \"\$s\" ] && { printf '\\n'; printf '%s\\n' \"\$s\"; };"
     fi
 

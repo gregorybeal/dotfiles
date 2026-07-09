@@ -280,6 +280,27 @@ else
     info "no register inventory — generate: scripts/gen_ssh_registers.py --db <db> --user <user>"
 fi
 
+REG_DB="${REG_DB:-$HOME/store_registers.db}"
+if [ ! -f "$REG_DB" ]; then
+    info "no inventory db at $REG_DB — fzf previews disabled (set REG_DB)"
+elif ! command -v sqlite3 >/dev/null 2>&1; then
+    info "sqlite3 not installed — fzf previews disabled"
+else
+    REG_TBL=$(sqlite3 -readonly "$REG_DB" \
+        "SELECT name FROM sqlite_master WHERE type IN ('table','view');" 2>/dev/null \
+        | while read -r t; do
+              if sqlite3 -readonly "$REG_DB" "PRAGMA table_info('$t');" 2>/dev/null \
+                   | awk -F'|' '{print tolower($2)}' | grep -q host; then echo "$t"; break; fi
+          done)
+    if [ -n "$REG_TBL" ]; then
+        ROWS=$(sqlite3 -readonly "$REG_DB" "SELECT COUNT(*) FROM \"$REG_TBL\";" 2>/dev/null)
+        ok "inventory db $REG_DB (table '$REG_TBL', $ROWS rows)"
+    else
+        warn "inventory db $REG_DB has no table with a hostname column — previews disabled"
+        warn "  is this the right file? set REG_DB in ~/.zshrc.local"
+    fi
+fi
+
 if command -v sshfs >/dev/null 2>&1; then
     ok "sshfs present (fmount)"
 else

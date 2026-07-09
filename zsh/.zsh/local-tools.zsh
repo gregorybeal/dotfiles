@@ -223,8 +223,9 @@ fmounts() {
 # ---------- VNC tunnels ----------
 # ProxyJump already gets us to the register, so the forward targets the
 # register's own loopback rather than an IP routed through the gateway.
-_REG_VNC_PORT="${REG_VNC_PORT:-5900}"   # VNC port on the register
-_REG_VNC_BASE="${REG_VNC_BASE:-5901}"   # first local port to try
+_REG_VNC_PORT="${REG_VNC_PORT:-5900}"    # VNC port on the register
+_REG_VNC_BASE="${REG_VNC_BASE:-5901}"    # first local port to try
+_REG_VNC_GRACE="${REG_VNC_GRACE:-20}"    # seconds for the viewer to connect
 
 # Test bindability rather than inspecting the listener table: zsh/net/tcp is
 # a builtin module, so this behaves identically on macOS and Linux and needs
@@ -261,7 +262,9 @@ _reg_vnc_tunnels() {
                                                  # unrelated command line that merely
                                                  # mentions the forward spec is skipped
         {
-            pid = $2; host = $NF; lport = ""
+            pid = $2; lport = ""
+            # argv ends "<host> sleep <n>"; tolerate an old-style "-N ... <host>"
+            host = ($(NF-1) == "sleep") ? $(NF-2) : $NF
             for (i = 1; i <= NF; i++)
                 if ($i == "-L" &&
                     index($(i+1), "127.0.0.1:") == 1 &&
@@ -301,14 +304,33 @@ fvnc() {
         print -P "%F{yellow}reusing%f tunnel on localhost:${lport}"
     else
         lport=$(_reg_free_port) || return
-        # ControlPath=none gives a dedicated process we can find and kill,
-        # rather than a forward multiplexed onto a shared master socket.
-        ssh -f -N \
+        # `sleep N` rather than -N, so the tunnel cleans itself up: ssh exits once
+        # the remote command has ended *and* no forwarded connection remains. It
+        # therefore dies N seconds from now if the viewer never connects, lives as
+        # long as the VNC session does, and exits ~1s after the viewer disconnects.
+        # ControlPath=none keeps it a dedicated process rather than a forward
+        # multiplexed onto a shared master socket.
+        # The backgrounded ssh holds its stdout/stderr open for the whole life of
+        # the remote command, so leaving them attached would make `x=$(fvnc)` or
+        # `fvnc | less` hang for the grace period. Point them at a temp file, and
+        # replay it only if the tunnel failed (ssh forks after the forward is set
+        # up, so any error is already written by the time it returns non-zero).
+        local errf
+        errf=$(mktemp "${TMPDIR:-/tmp}/fvnc.XXXXXX") || return 1
+        if ssh -f \
             -o ExitOnForwardFailure=yes \
             -o ControlPath=none \
             -L "127.0.0.1:${lport}:localhost:${_REG_VNC_PORT}" \
-            "$host" || { print -u2 "fvnc: tunnel to $host failed"; return 1 }
-        print -P "%F{green}tunnel%f $host:${_REG_VNC_PORT} → localhost:${lport}"
+            "$host" sleep "$_REG_VNC_GRACE" >"$errf" 2>&1
+        then
+            rm -f "$errf"
+        else
+            print -u2 "fvnc: tunnel to $host failed"
+            [[ -s $errf ]] && print -u2 -- "$(<"$errf")"
+            rm -f "$errf"
+            return 1
+        fi
+        print -P "%F{green}tunnel%f $host:${_REG_VNC_PORT} → localhost:${lport} %F{242}(self-closing)%f"
     fi
 
     _reg_vnc_open "127.0.0.1:${lport}"

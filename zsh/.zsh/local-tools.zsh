@@ -292,11 +292,19 @@ _reg_vnc_tunnels() {
 #   REG_VNC_PASS_CMD='op read op://Private/register-vnc/password'
 _reg_vnc_password() {
     [[ -n $REG_VNC_PASS_CMD ]] || return 1
-    local pw
-    if ! pw=$(eval "$REG_VNC_PASS_CMD" 2>/dev/null) || [[ -z $pw ]]; then
-        print -u2 "fvnc: REG_VNC_PASS_CMD failed; the viewer will prompt"
+    local pw errf rc
+    errf=$(mktemp "${TMPDIR:-/tmp}/fvnc-pw.XXXXXX") || return 1
+    pw=$(eval "$REG_VNC_PASS_CMD" 2>"$errf"); rc=$?
+    if (( rc != 0 )) || [[ -z $pw ]]; then
+        print -u2 "fvnc: REG_VNC_PASS_CMD exited $rc$( (( rc == 0 )) && print -n ' but produced no output')"
+        print -u2 "  cmd: $REG_VNC_PASS_CMD"
+        [[ -s $errf ]] && sed 's/^/  /' "$errf" >&2
+        (( rc == 127 )) && print -u2 "  hint: it must be a command that *prints* the password, not the password itself"
+        print -u2 "  the viewer will prompt"
+        rm -f "$errf"
         return 1
     fi
+    rm -f "$errf"
     print -r -- "$pw"
 }
 
@@ -307,11 +315,15 @@ _reg_vnc_password() {
 _reg_vnc_open() {
     local addr="$1" pw
     pw=$(_reg_vnc_password) || pw=""
+    # Classic VNC auth (RFB security type 2) has no username — only VeNCrypt/plain
+    # does. Set REG_VNC_USER only if your server actually asks for one; it is not
+    # the SSH login, which the ssh config already supplies.
+    local user="${REG_VNC_USER:-}"
 
     if [[ -n $REG_VNC_CMD ]]; then
-        VNC_PASSWORD="$pw" eval "$REG_VNC_CMD $addr"
+        VNC_USERNAME="$user" VNC_PASSWORD="$pw" eval "$REG_VNC_CMD $addr"
     elif command -v vncviewer >/dev/null 2>&1; then
-        VNC_PASSWORD="$pw" vncviewer "$addr" >/dev/null 2>&1 &!
+        VNC_USERNAME="$user" VNC_PASSWORD="$pw" vncviewer "$addr" >/dev/null 2>&1 &!
     elif [[ $OSTYPE == darwin* ]]; then
         [[ -n $pw ]] && print -u2 "fvnc: Screen Sharing cannot take a password; install tiger-vnc"
         open "vnc://$addr"

@@ -57,11 +57,47 @@ _reg_db_schema() {
     return 1
 }
 
+# Find the store table and the column holding the store number, as
+# "table<TAB>keycol". Registers are named NNNNregNN, so the first four
+# characters are the store number — the same derivation gen_ssh_registers.py
+# uses to join. Pin with REG_DB_STORE_TABLE / REG_DB_STORE_COL.
+_reg_db_store() {
+    if [[ -n $REG_DB_STORE_TABLE && -n $REG_DB_STORE_COL ]]; then
+        print -r -- "${REG_DB_STORE_TABLE}"$'\t'"${REG_DB_STORE_COL}"
+        return 0
+    fi
+
+    local regtbl schema
+    schema=$(_reg_db_schema) && regtbl=${schema%%$'\t'*}
+
+    local -a tables cols
+    local t c keyc
+    tables=(${(f)"$(sqlite3 -readonly "$_REG_DB" \
+        "SELECT name FROM sqlite_master WHERE type IN ('table','view');" 2>/dev/null)"})
+
+    for t in $tables; do
+        [[ $t == $regtbl ]] && continue          # the register table is not the store table
+        cols=(${(f)"$(sqlite3 -readonly "$_REG_DB" "PRAGMA table_info('$t');" 2>/dev/null \
+            | awk -F'|' '{print $2}')"})
+        keyc=""
+        for c in store_number store_num storenumber store_id store; do
+            (( ${cols[(I)$c]} )) && { keyc=$c; break }
+        done
+        [[ -n $keyc ]] && { print -r -- "$t"$'\t'"$keyc"; return 0 }
+    done
+    return 1
+}
+
 # Sets `reply` to the fzf preview flags, or leaves it empty when there is no
 # database, no sqlite3, or no table that looks like an inventory. A missing
 # table is a configuration fact, not a per-keystroke error, so it produces no
 # preview rather than an error smeared across the pane. A query that fails at
 # runtime still shows its error there.
+#
+# The preview uses `sqlite3 -line` to dump *every* column of the matched
+# register row, then of the matched store row. Nothing is hardcoded, so city,
+# state, regional and whatever else exists show up on their own, and a schema
+# change cannot silently break it.
 #
 # fzf substitutes {} with a *shell-quoted* token — 0003reg01 arrives as
 # '0003reg01' — so it must not be wrapped in quotes again, or sqlite sees
@@ -73,24 +109,32 @@ _reg_preview_args() {
     [[ -f $_REG_DB ]] || return 0
     command -v sqlite3 >/dev/null 2>&1 || return 0
 
-    local schema tbl hostc ipc
+    local schema tbl hostc
     schema=$(_reg_db_schema) || return 0
     tbl=${schema%%$'\t'*}
     hostc=${${schema#*$'\t'}%%$'\t'*}
-    ipc=${schema##*$'\t'}
 
-    local ipsel="'?'"
-    [[ -n $ipc ]] && ipsel="COALESCE(\"$ipc\",'?')"
-    local sql="SELECT 'host : '||\"$hostc\"||char(10)||'ip   : '||$ipsel FROM \"$tbl\" WHERE \"$hostc\"="
+    local db=${(q)_REG_DB}
+    local regq="sqlite3 -readonly -line $db \"SELECT * FROM \\\"$tbl\\\" WHERE \\\"$hostc\\\"='\$h';\""
+
+    # The store join is optional: plenty of inventories have no stores table.
+    local storeq="" sschema stbl skey
+    if sschema=$(_reg_db_store); then
+        stbl=${sschema%%$'\t'*}
+        skey=${sschema##*$'\t'}
+        storeq="s=\$(sqlite3 -readonly -line $db \"SELECT * FROM \\\"$stbl\\\" WHERE \\\"$skey\\\"=substr('\$h',1,4);\"); \
+                [ -n \"\$s\" ] && { printf '\\n'; printf '%s\\n' \"\$s\"; };"
+    fi
 
     reply=(
         --preview "h={}; case \$h in \
                      *[!A-Za-z0-9_.-]*) printf 'host : %s\\n(no preview)\\n' \"\$h\";; \
-                     *) o=\$(sqlite3 -readonly ${(q)_REG_DB} \"${sql}'\$h';\"); \
-                        if [ -n \"\$o\" ]; then printf '%s\\n' \"\$o\"; \
-                        else printf 'host : %s\\n(not in %s)\\n' \"\$h\" ${(q)_REG_DB:t}; fi;; \
+                     *) r=\$($regq); \
+                        if [ -n \"\$r\" ]; then printf '%s\\n' \"\$r\"; \
+                        else printf 'host : %s\\n(not in %s)\\n' \"\$h\" ${(q)_REG_DB:t}; fi; \
+                        $storeq ;; \
                    esac"
-        --preview-window=down,3,wrap
+        --preview-window=right,50%,wrap
     )
 }
 
@@ -105,14 +149,15 @@ _reg_pick() {
         --query="$query" "${reply[@]}"
 }
 
-# _reg_pick_expect <prompt> <expect-keys> <header> [query] — prints two lines:
-# the key that was pressed (empty for Enter), then the selection.
+# _reg_pick_expect <prompt> <expect-keys> <header> [query] — prints the pressed
+# key (empty for Enter) on line 1, then one selected host per line. Tab
+# multi-selects.
 _reg_pick_expect() {
     local prompt="$1" keys="$2" header="$3" query="${4-}" all
     local -a reply
     all=$(_reg_hosts) || return
     _reg_preview_args
-    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% \
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% --multi \
         --query="$query" --header="$header" --expect="$keys" "${reply[@]}"
 }
 
@@ -126,11 +171,55 @@ _reg_pick_multi() {
         --query="$query" "${reply[@]}"
 }
 
-# fssh [query] — fuzzy-pick a register and SSH in
+# _reg_tmux_panes <session> <ssh-target>... — one tiled pane per target,
+# attaching (or switching to) an existing session of that name instead.
+_reg_tmux_panes() {
+    command -v tmux >/dev/null || { print -u2 "tmux not found"; return 1 }
+    local session="$1"; shift
+    local -a targets=("$@")
+    (( ${#targets} )) || return 1
+
+    if tmux has-session -t "=$session" 2>/dev/null; then
+        if [[ -n $TMUX ]]; then tmux switch-client -t "$session"
+        else tmux attach-session -t "$session"; fi
+        return
+    fi
+
+    tmux new-session -d -s "$session" -x 250 -y 60 -n registers "ssh ${targets[1]}"
+    tmux select-pane -t "$session" -T "${targets[1]}"
+    local t
+    for t in ${targets[2,-1]}; do
+        tmux split-window -t "$session" "ssh $t"
+        tmux select-pane -t "$session" -T "$t"
+        tmux select-layout -t "$session" tiled >/dev/null
+    done
+    tmux select-layout -t "$session" tiled >/dev/null
+    tmux setw -t "$session" pane-border-status top
+    tmux setw -t "$session" pane-border-format " #{pane_title} "
+
+    if [[ -n $TMUX ]]; then tmux switch-client -t "$session"
+    else tmux attach-session -t "$session"; fi
+}
+
+# fssh [query] — fuzzy-pick registers and SSH in (Tab to multi-select).
+# One host opens a plain ssh session; several open a tmux window of tiled panes,
+# since a single shell cannot ssh to more than one host.
 fssh() {
-    local host
-    host=$(_reg_pick ssh "$1") || return
-    [[ -n $host ]] && ssh "$host"
+    local out
+    out=$(_reg_pick_multi ssh "$1") || return
+    [[ -n $out ]] || return
+    local -a hosts=("${(@f)out}")
+
+    if (( ${#hosts} == 1 )); then
+        ssh "${hosts[1]}"
+        return
+    fi
+
+    # Name the session after the store when they all share one, else "fssh".
+    local session="fssh" prefix=${hosts[1]:0:4}
+    local h; for h in $hosts; do [[ ${h:0:4} == $prefix ]] || { prefix=""; break } done
+    [[ -n $prefix ]] && session=$prefix
+    _reg_tmux_panes "$session" "${hosts[@]}"
 }
 
 # frun [cmd] — run a command on one or more registers (Tab to multi-select)
@@ -172,27 +261,7 @@ fstore() {
     fi
 
     local up=""; [[ -n $REG_SSH_USER ]] && up="${REG_SSH_USER}@"
-
-    if tmux has-session -t "=$store" 2>/dev/null; then
-        if [[ -n $TMUX ]]; then tmux switch-client -t "$store"
-        else tmux attach-session -t "$store"; fi
-        return
-    fi
-
-    tmux new-session -d -s "$store" -x 250 -y 60 -n registers "ssh ${up}${hosts[1]}"
-    tmux select-pane -t "$store" -T "${hosts[1]}"
-    local h
-    for h in $hosts[2,-1]; do
-        tmux split-window -t "$store" "ssh ${up}${h}"
-        tmux select-pane -t "$store" -T "$h"
-        tmux select-layout -t "$store" tiled >/dev/null
-    done
-    tmux select-layout -t "$store" tiled >/dev/null
-    tmux setw -t "$store" pane-border-status top
-    tmux setw -t "$store" pane-border-format " #{pane_title} "
-
-    if [[ -n $TMUX ]]; then tmux switch-client -t "$store"
-    else tmux attach-session -t "$store"; fi
+    _reg_tmux_panes "$store" ${hosts/#/$up}
 }
 
 # ---------- sshfs register mounts ----------
@@ -401,49 +470,66 @@ _reg_vnc_open() {
     fi
 }
 
-# fvnc [query] — tunnel to a register's VNC port and open a viewer
-fvnc() {
-    local host lport
-    host=$(_reg_pick vnc "$1") || return
-    [[ -n $host ]] || return
-
-    # Reuse an existing tunnel to this host instead of stacking another.
+# _reg_vnc_tunnel_open <host> — print the local port on stdout, reusing an
+# existing tunnel to that host rather than stacking another. Progress messages
+# go to stderr so `lport=$(_reg_vnc_tunnel_open ...)` stays clean.
+_reg_vnc_tunnel_open() {
+    local host="$1" lport errf
     lport=$(_reg_vnc_tunnels | awk -v h="$host" '$3 == h { print $2; exit }')
-
     if [[ -n $lport ]]; then
-        print -P "%F{yellow}reusing%f tunnel on localhost:${lport}"
-    else
-        lport=$(_reg_free_port) || return
-        # `sleep N` rather than -N, so the tunnel cleans itself up: ssh exits once
-        # the remote command has ended *and* no forwarded connection remains. It
-        # therefore dies N seconds from now if the viewer never connects, lives as
-        # long as the VNC session does, and exits ~1s after the viewer disconnects.
-        # ControlPath=none keeps it a dedicated process rather than a forward
-        # multiplexed onto a shared master socket.
-        # The backgrounded ssh holds its stdout/stderr open for the whole life of
-        # the remote command, so leaving them attached would make `x=$(fvnc)` or
-        # `fvnc | less` hang for the grace period. Point them at a temp file, and
-        # replay it only if the tunnel failed (ssh forks after the forward is set
-        # up, so any error is already written by the time it returns non-zero).
-        local errf
-        errf=$(mktemp "${TMPDIR:-/tmp}/fvnc.XXXXXX") || return 1
-        if ssh -f \
-            -o ExitOnForwardFailure=yes \
-            -o ControlPath=none \
-            -L "127.0.0.1:${lport}:localhost:${_REG_VNC_PORT}" \
-            "$host" sleep "$_REG_VNC_GRACE" >"$errf" 2>&1
-        then
-            rm -f "$errf"
-        else
-            print -u2 "fvnc: tunnel to $host failed"
-            [[ -s $errf ]] && print -u2 -- "$(<"$errf")"
-            rm -f "$errf"
-            return 1
-        fi
-        print -P "%F{green}tunnel%f $host:${_REG_VNC_PORT} → localhost:${lport} %F{242}(self-closing)%f"
+        print -u2 -P "%F{yellow}reusing%f tunnel to $host on localhost:${lport}"
+        print -r -- "$lport"
+        return 0
     fi
 
-    _reg_vnc_open "127.0.0.1:${lport}"
+    lport=$(_reg_free_port) || return 1
+    # `sleep N` rather than -N, so the tunnel cleans itself up: ssh exits once
+    # the remote command has ended *and* no forwarded connection remains. It
+    # therefore dies N seconds from now if the viewer never connects, lives as
+    # long as the VNC session does, and exits ~1s after the viewer disconnects.
+    # ControlPath=none keeps it a dedicated process rather than a forward
+    # multiplexed onto a shared master socket.
+    # The backgrounded ssh holds its stdout/stderr open for the whole life of
+    # the remote command, so leaving them attached would make `x=$(fvnc)` or
+    # `fvnc | less` hang for the grace period. Point them at a temp file, and
+    # replay it only if the tunnel failed (ssh forks after the forward is set
+    # up, so any error is already written by the time it returns non-zero).
+    errf=$(mktemp "${TMPDIR:-/tmp}/fvnc.XXXXXX") || return 1
+    if ssh -f \
+        -o ExitOnForwardFailure=yes \
+        -o ControlPath=none \
+        -L "127.0.0.1:${lport}:localhost:${_REG_VNC_PORT}" \
+        "$host" sleep "$_REG_VNC_GRACE" >"$errf" 2>&1
+    then
+        rm -f "$errf"
+    else
+        print -u2 "fvnc: tunnel to $host failed"
+        [[ -s $errf ]] && print -u2 -- "$(<"$errf")"
+        rm -f "$errf"
+        return 1
+    fi
+    print -u2 -P "%F{green}tunnel%f $host:${_REG_VNC_PORT} → localhost:${lport} %F{242}(self-closing)%f"
+    print -r -- "$lport"
+}
+
+# fvnc [query] — tunnel to registers' VNC ports and open a viewer for each
+# (Tab to multi-select). Each host gets its own local port and its own
+# self-closing tunnel.
+fvnc() {
+    local out
+    out=$(_reg_pick_multi vnc "$1") || return
+    [[ -n $out ]] || return
+    local -a hosts=("${(@f)out}")
+
+    local host lport rc=0
+    for host in $hosts; do
+        if lport=$(_reg_vnc_tunnel_open "$host"); then
+            _reg_vnc_open "127.0.0.1:${lport}"
+        else
+            rc=1
+        fi
+    done
+    return $rc
 }
 
 # fvnc-list — show active VNC tunnels
@@ -557,16 +643,23 @@ _reg_ip() {
 frtsx() {
     [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
 
-    local out key host proto ip
-    out=$(_reg_pick_expect rtsx ctrl-s 'enter=vnc   ctrl-s=ssh' "$1") || return
+    local out key proto host ip rc=0
+    out=$(_reg_pick_expect rtsx ctrl-s 'enter=vnc   ctrl-s=ssh   tab=multi-select' "$1") || return
     local -a lines; lines=("${(@f)out}")
-    key=${lines[1]}; host=${lines[2]}
-    [[ -n $host ]] || return
+    key=${lines[1]}
+    local -a hosts=("${lines[@]:1}")   # line 1 is the key; the rest are hosts
+    (( ${#hosts} )) || return
 
-    ip=$(_reg_ip "$host") || return 1
     [[ $key == ctrl-s ]] && proto=ssh || proto=vnc
-    print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${ip})%f"
-    open "rtsx://${proto}://${ip}"
+    for host in $hosts; do
+        if ip=$(_reg_ip "$host"); then
+            print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${ip})%f"
+            open "rtsx://${proto}://${ip}"
+        else
+            rc=1
+        fi
+    done
+    return $rc
 }
 
 # ---------- yazi directory jump ----------

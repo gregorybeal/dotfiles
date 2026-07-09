@@ -50,6 +50,17 @@ _reg_pick() {
         --query="$query" "${reply[@]}"
 }
 
+# _reg_pick_expect <prompt> <expect-keys> <header> [query] — prints two lines:
+# the key that was pressed (empty for Enter), then the selection.
+_reg_pick_expect() {
+    local prompt="$1" keys="$2" header="$3" query="${4-}" all
+    local -a reply
+    all=$(_reg_hosts) || return
+    _reg_preview_args
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% \
+        --query="$query" --header="$header" --expect="$keys" "${reply[@]}"
+}
+
 # _reg_pick_multi <prompt> [query] — same, with Tab to multi-select
 _reg_pick_multi() {
     local prompt="$1" query="${2-}" all
@@ -438,6 +449,28 @@ fzf-ssh-widget() {
 }
 zle -N fzf-ssh-widget
 bindkey '^O' fzf-ssh-widget
+
+# ---------- Royal TSX ----------
+# frtsx [query] — pick a register and hand it to Royal TSX as an ad hoc
+# connection. Enter opens VNC, Ctrl-S opens SSH.
+#
+# No tunnel and no credentials here: Royal TSX's ad hoc connection settings
+# already supply the secure gateway and the credential. The URI carries only
+# the protocol and the hostname, which is the form Royal Apps document
+# (rtsx://web://host). Escaping is only needed when the URI carries
+# user:pass@host:port, and query strings are ignored by Royal TSX on macOS.
+frtsx() {
+    [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
+
+    local out key host proto
+    out=$(_reg_pick_expect rtsx ctrl-s 'enter=vnc   ctrl-s=ssh' "$1") || return
+    local -a lines; lines=("${(@f)out}")
+    key=${lines[1]}; host=${lines[2]}
+    [[ -n $host ]] || return
+
+    [[ $key == ctrl-s ]] && proto=ssh || proto=vnc
+    open "rtsx://${proto}://${host}"
+}
 
 # ---------- yazi directory jump ----------
 function y() {

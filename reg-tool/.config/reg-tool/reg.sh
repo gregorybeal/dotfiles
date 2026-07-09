@@ -138,7 +138,8 @@ reg-multi() {
     while read -r ip; do
         echo ""
         echo "=== $ip ==="
-        ssh -J "$REG_JUMPBOX" "$REG_USER@$ip" "$cmd"
+        # -n: without it ssh drains the herestring and the loop ends after one host
+        ssh -n -J "$REG_JUMPBOX" "$REG_USER@$ip" "$cmd"
     done <<< "$ips"
 }
 

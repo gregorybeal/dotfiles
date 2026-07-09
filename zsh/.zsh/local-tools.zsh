@@ -16,14 +16,25 @@ _reg_hosts() {
 # no database to preview from. Errors are deliberately not silenced: if the
 # db exists but the schema drifts, the query error shows in the preview pane
 # rather than vanishing into a blank box.
+#
+# fzf substitutes {} with a *shell-quoted* token — 0003reg01 arrives as
+# '0003reg01' — so it must not be wrapped in quotes again, or sqlite sees
+# ='' 0003reg01''. Assign it to h first (the shell strips fzf's quoting),
+# then quote it exactly once. The case guard keeps a hostname that somehow
+# contains a quote from breaking out of the SQL string.
 _reg_preview_args() {
     reply=()
     [[ -f $_REG_DB ]] || return 0
     command -v sqlite3 >/dev/null 2>&1 || return 0
+    local sql="SELECT 'host : '||register_hostname||char(10)||'ip   : '||COALESCE(register_ip,'?') FROM registers WHERE register_hostname="
+    # sqlite's stderr is left attached, so a schema error still shows in the pane.
     reply=(
-        --preview "sqlite3 -readonly ${(q)_REG_DB} \
-            \"SELECT 'host : '||register_hostname||char(10)||'ip   : '||COALESCE(register_ip,'?') \
-               FROM registers WHERE register_hostname='{}';\""
+        --preview "h={}; case \$h in \
+                     *[!A-Za-z0-9_.-]*) printf 'host : %s\\n(no preview)\\n' \"\$h\";; \
+                     *) o=\$(sqlite3 -readonly ${(q)_REG_DB} \"${sql}'\$h';\"); \
+                        if [ -n \"\$o\" ]; then printf '%s\\n' \"\$o\"; \
+                        else printf 'host : %s\\n(not in %s)\\n' \"\$h\" ${(q)_REG_DB:t}; fi;; \
+                   esac"
         --preview-window=down,3,wrap
     )
 }

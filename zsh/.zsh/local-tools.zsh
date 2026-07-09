@@ -1,6 +1,3 @@
-# ---------- reg-tool ----------
-[ -f "$HOME/.config/reg-tool/reg.sh" ] && source "$HOME/.config/reg-tool/reg.sh"
-
 # ---------- fzf register tools ----------
 _REG_CONF="${REG_CONF:-$HOME/.ssh/conf.d/registers}"
 _REG_DB="${REG_DB:-$HOME/store_registers.db}"
@@ -192,6 +189,129 @@ fmounts() {
     local m
     m=$(_reg_mounts)
     [[ -n $m ]] && print -r -- "$m" || print "(no register mounts)"
+}
+
+# ---------- VNC tunnels ----------
+# ProxyJump already gets us to the register, so the forward targets the
+# register's own loopback rather than an IP routed through the gateway.
+_REG_VNC_PORT="${REG_VNC_PORT:-5900}"   # VNC port on the register
+_REG_VNC_BASE="${REG_VNC_BASE:-5901}"   # first local port to try
+
+_reg_port_free() {
+    if command -v ss >/dev/null 2>&1; then
+        [[ -z "$(ss -ltnH "sport = :$1" 2>/dev/null)" ]]
+    elif command -v lsof >/dev/null 2>&1; then
+        ! lsof -iTCP:"$1" -sTCP:LISTEN -Pn >/dev/null 2>&1
+    else
+        return 0
+    fi
+}
+
+_reg_free_port() {
+    local p=$_REG_VNC_BASE
+    while (( p < _REG_VNC_BASE + 100 )); do
+        _reg_port_free $p && { print -r -- $p; return 0 }
+        (( p++ ))
+    done
+    print -u2 "fvnc: no free local port in ${_REG_VNC_BASE}-$((_REG_VNC_BASE + 99))"
+    return 1
+}
+
+# Active fvnc tunnels, one "pid lport host" per line.
+# `ps -ax -o` rather than `-eo`: on macOS `ps -e` means "show environment".
+_reg_vnc_tunnels() {
+    ps -ax -o pid=,args= 2>/dev/null | awk -v rport=":localhost:$_REG_VNC_PORT" '
+        # $2 is the executable: anchor on it so an unrelated command line that
+        # merely mentions the forward spec is not mistaken for a tunnel.
+        $2 != "ssh" && $2 !~ /\/ssh$/ { next }
+        {
+            pid = $1; host = $NF; lport = ""
+            for (i = 1; i <= NF; i++)
+                if ($i == "-L" && index($(i+1), "127.0.0.1:") == 1 \
+                              && index($(i+1), rport) > 0) {
+                    split($(i+1), a, ":"); lport = a[2]
+                }
+            if (lport != "") print pid, lport, host
+        }'
+}
+
+_reg_vnc_open() {
+    local addr="$1"
+    if [[ -n $REG_VNC_CMD ]]; then
+        eval "$REG_VNC_CMD $addr"
+    elif [[ $OSTYPE == darwin* ]]; then
+        open "vnc://$addr"
+    elif command -v vncviewer >/dev/null 2>&1; then
+        vncviewer "$addr" >/dev/null 2>&1 &!
+    elif command -v remmina >/dev/null 2>&1; then
+        remmina -c "vnc://$addr" >/dev/null 2>&1 &!
+    else
+        print "no VNC viewer found — point yours at $addr"
+        print "set REG_VNC_CMD to choose one, e.g. REG_VNC_CMD=vncviewer"
+    fi
+}
+
+# fvnc [query] — tunnel to a register's VNC port and open a viewer
+fvnc() {
+    local all host lport
+    all=$(_reg_hosts) || return
+    host=$(print -r -- "$all" \
+            | fzf --prompt='vnc ❯ ' --reverse --height=40% --query="$1") || return
+    [[ -n $host ]] || return
+
+    # Reuse an existing tunnel to this host instead of stacking another.
+    lport=$(_reg_vnc_tunnels | awk -v h="$host" '$3 == h { print $2; exit }')
+
+    if [[ -n $lport ]]; then
+        print -P "%F{yellow}reusing%f tunnel on localhost:${lport}"
+    else
+        lport=$(_reg_free_port) || return
+        # ControlPath=none gives a dedicated process we can find and kill,
+        # rather than a forward multiplexed onto a shared master socket.
+        ssh -f -N \
+            -o ExitOnForwardFailure=yes \
+            -o ControlPath=none \
+            -L "127.0.0.1:${lport}:localhost:${_REG_VNC_PORT}" \
+            "$host" || { print -u2 "fvnc: tunnel to $host failed"; return 1 }
+        print -P "%F{green}tunnel%f $host:${_REG_VNC_PORT} → localhost:${lport}"
+    fi
+
+    _reg_vnc_open "127.0.0.1:${lport}"
+}
+
+# fvnc-list — show active VNC tunnels
+fvnc-list() {
+    local t
+    t=$(_reg_vnc_tunnels)
+    [[ -z $t ]] && { print "(no vnc tunnels)"; return 0 }
+    printf "%-8s %-6s %s\n" PID PORT HOST
+    print -r -- "$t" | awk '{ printf "%-8s %-6s %s\n", $1, $2, $3 }'
+}
+
+# fvnc-kill [-a] — close VNC tunnels (Tab to multi-select, -a for all)
+fvnc-kill() {
+    local t sel
+    t=$(_reg_vnc_tunnels)
+    [[ -z $t ]] && { print -u2 "fvnc-kill: no vnc tunnels"; return 1 }
+
+    if [[ $1 == -a ]]; then
+        sel="$t"
+    else
+        sel=$(print -r -- "$t" | fzf --prompt='close ❯ ' --reverse --height=40% \
+                --multi --header='PID      PORT   HOST') || return
+    fi
+    [[ -n $sel ]] || return
+
+    local pid lport host rc=0
+    while read -r pid lport host; do
+        if kill "$pid" 2>/dev/null; then
+            print -P "%F{green}closed%f $host (localhost:$lport)"
+        else
+            print -u2 "fvnc-kill: could not kill pid $pid ($host)"
+            rc=1
+        fi
+    done <<< "$sel"
+    return $rc
 }
 
 # Ctrl-G — inline fuzzy register picker (inserts hostname at cursor)

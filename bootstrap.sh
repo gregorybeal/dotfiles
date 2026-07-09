@@ -47,7 +47,7 @@ echo "Stowing dotfiles from $SCRIPT_DIR..."
 cd "$SCRIPT_DIR"
 make stow
 
-# --- Machine-local config (git identity, reg-tool config) ---
+# --- Machine-local config (git identity, jira-cli config) ---
 echo ""
 ./scripts/setup-local.sh
 
@@ -85,5 +85,4 @@ echo ""
 echo "Done! Next steps:"
 echo "  1. Restart your shell (or: exec zsh)"
 echo "  2. gh auth login"
-echo "  3. Edit ~/.config/reg-tool/config with your jumpbox and SQLite paths"
-echo "  4. make doctor  — verify everything's healthy"
+echo "  3. make doctor  — verify everything's healthy"

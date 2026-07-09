@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal config for shell, tmux, git, SSH, terminals, VS Code, and the `reg-tool` register management toolkit. Managed with [GNU Stow](https://www.gnu.org/software/stow/). Works on Mac, Linux, and WSL. (Native Windows is no longer supported — use WSL.)
+Personal config for shell, tmux, git, SSH, terminals, and VS Code. Managed with [GNU Stow](https://www.gnu.org/software/stow/). Works on Mac, Linux, and WSL. (Native Windows is no longer supported — use WSL.)
 
 ## Quick start
 
@@ -25,7 +25,7 @@ make stow           # (re-)symlink all packages into $HOME — idempotent
 make unstow          # remove all package symlinks from $HOME
 make update         # git pull + re-stow
 make doctor          # health check
-make setup-local    # (re-)create machine-local config (git identity, reg-tool config)
+make setup-local    # (re-)create machine-local config (git identity, jira-cli config)
 make brew           # update Mac apps from Brewfile
 ```
 
@@ -45,7 +45,7 @@ Each top-level directory is a **Stow package** whose contents mirror `$HOME`. `s
 
 Adding a new package: create a directory named after the tool, lay out files inside it exactly as they should appear relative to `$HOME` (e.g. `mytool/.config/mytool/config`), then add it to `CORE_PACKAGES` (or `MAC_PACKAGES` for Mac-only tools) in the `Makefile` and run `make stow`.
 
-**Directories Stow doesn't create:** Stow creates whatever directory structure is needed to host the files it's symlinking (e.g. `~/.config/reg-tool/` gets created automatically because `reg.sh` lives there) — but it has no reason to create directories that don't contain a stowed file. A few tools need such directories at runtime for cache/state/sockets they generate themselves (zsh's history file and completion dump, SSH's control sockets). `make dirs` creates those; `make stow` depends on it, so a plain `make stow` (or `./bootstrap.sh`) always covers it. If you ever see zsh history not persisting or SSH connection-sharing not kicking in, run `make dirs` (or check `make doctor`, which verifies all of them exist).
+**Directories Stow doesn't create:** Stow creates whatever directory structure is needed to host the files it's symlinking (e.g. `~/.config/atuin/` gets created automatically because `config.toml` lives there) — but it has no reason to create directories that don't contain a stowed file. A few tools need such directories at runtime for cache/state/sockets they generate themselves (zsh's history file and completion dump, SSH's control sockets). `make dirs` creates those; `make stow` depends on it, so a plain `make stow` (or `./bootstrap.sh`) always covers it. If you ever see zsh history not persisting or SSH connection-sharing not kicking in, run `make dirs` (or check `make doctor`, which verifies all of them exist).
 
 ## Layout
 
@@ -61,8 +61,6 @@ dotfiles/
 ├── ghostty/                    → ~/.config/ghostty/config
 ├── atuin/                      → ~/.config/atuin/config.toml
 ├── btop/                       → ~/.config/btop/btop.conf
-├── reg-tool/                   → ~/.config/reg-tool/{reg.sh,refresh.py}
-│   └── config.example              (not deployed — copied to ~/.config/reg-tool/config by setup-local.sh)
 ├── vscode/                     → ~/.config/Code/User/{settings.json,keybindings.json,snippets/}
 │   └── extensions.txt              (not deployed — read by `make vscode-ext`)
 ├── powershell/                 → ~/.config/powershell/Microsoft.PowerShell_profile.ps1  (pwsh on Mac/Linux/WSL)
@@ -71,7 +69,7 @@ dotfiles/
 ├── 1password/        (Mac only) → ~/.config/1Password/ssh/agent.toml
 │
 ├── scripts/
-│   ├── setup-local.sh            creates ~/.gitconfig.local and ~/.config/reg-tool/config
+│   ├── setup-local.sh            creates ~/.gitconfig.local and the jira-cli config
 │   ├── doctor.sh                  health check (run via `make doctor`)
 │   ├── adopt-conflicts.sh         backs up pre-existing real files before `stow` runs (run via `make stow`)
 │   └── gen_ssh_registers.py       generates ~/.ssh/conf.d/registers from store_registers.db (run manually — see --help)
@@ -87,7 +85,6 @@ dotfiles/
 ## Machine-specific / secret files (never committed, gitignored)
 
 - `~/.gitconfig.local` — **required**: `[user] name / email / signingkey`. Created by `make setup-local` (prompts on first run).
-- `~/.config/reg-tool/config` — jumpbox, SQLite paths. Created from `reg-tool/config.example` by `make setup-local`.
 - `~/.zshrc.local` — extra zsh config (work credentials, machine-specific PATH, etc.)
 - `~/.bashrc.local` — extra bash config
 - `~/.ssh/config.local` — extra SSH config, included automatically

@@ -61,7 +61,7 @@ brew "sshpass"
 # Dev
 brew "node"                 # for occasional npm tools
 brew "ansible"              # if you ever run from Mac
-brew "sqlite"               # cli for your reg-tool DB
+brew "sqlite"               # cli for the register inventory DB (fssh preview)
 brew "lazygit"
 brew "lazysql"
 brew "Adembc/homebrew-tap/lazyssh"

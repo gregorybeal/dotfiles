@@ -29,9 +29,6 @@ fi
 # ---------- Shared aliases ----------
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
 
-# ---------- reg-tool ----------
-[ -f "$HOME/.config/reg-tool/reg.sh" ] && source "$HOME/.config/reg-tool/reg.sh"
-
 # ---------- fzf ----------
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 

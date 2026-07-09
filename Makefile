@@ -4,7 +4,7 @@
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
 
-CORE_PACKAGES := zsh bash aliases git ssh tmux nvim starship ghostty atuin btop reg-tool powershell
+CORE_PACKAGES := zsh bash aliases git ssh tmux nvim starship ghostty atuin btop powershell
 MAC_PACKAGES  := karabiner keyboardcowboy 1password
 
 .DEFAULT_GOAL := help
@@ -46,7 +46,7 @@ ifeq ($(OS),Darwin)
 endif
 
 .PHONY: setup-local
-setup-local:  ## Create machine-local config (git identity, reg-tool config)
+setup-local:  ## Create machine-local config (git identity, jira-cli config)
 	@./scripts/setup-local.sh
 
 .PHONY: linux-packages
@@ -112,7 +112,4 @@ update:  ## Pull latest changes and re-stow
 	@git pull
 	@$(MAKE) stow
 
-.PHONY: reg-refresh
-reg-refresh:  ## Refresh register inventory CSV from SQLite
-	@uv run ~/.config/reg-tool/refresh.py
 

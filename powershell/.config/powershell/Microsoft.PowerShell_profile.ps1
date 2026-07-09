@@ -89,12 +89,6 @@ function Edit-Tmux     { code "$env:USERPROFILE\.tmux.conf" }
 function Edit-Ssh      { code "$env:USERPROFILE\.ssh\config" }
 function Reload-Profile { . $PROFILE }
 
-# ---------- reg-tool ----------
-$regToolScript = "$env:USERPROFILE\.config\reg-tool\reg.ps1"
-if (Test-Path $regToolScript) {
-    . $regToolScript
-}
-
 # ---------- Machine-local overrides (not in repo) ----------
 $localProfile = "$env:USERPROFILE\.powershell_profile.local.ps1"
 if (Test-Path $localProfile) {

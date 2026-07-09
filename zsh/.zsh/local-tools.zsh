@@ -275,19 +275,40 @@ _reg_vnc_tunnels() {
         }'
 }
 
+# Fetch the VNC password, if $REG_VNC_PASS_CMD is configured. Printed on stdout
+# and never written to disk; the caller passes it to the viewer via the
+# environment. Set it in ~/.zshrc.local, e.g.
+#   REG_VNC_PASS_CMD='op read op://Private/register-vnc/password'
+_reg_vnc_password() {
+    [[ -n $REG_VNC_PASS_CMD ]] || return 1
+    local pw
+    if ! pw=$(eval "$REG_VNC_PASS_CMD" 2>/dev/null) || [[ -z $pw ]]; then
+        print -u2 "fvnc: REG_VNC_PASS_CMD failed; the viewer will prompt"
+        return 1
+    fi
+    print -r -- "$pw"
+}
+
+# Viewer preference: an explicit REG_VNC_CMD, then TigerVNC (the only one that
+# takes a password non-interactively, via VNC_PASSWORD), then whatever the
+# platform offers. Apple's Screen Sharing cannot be fed a password, so it stays
+# a fallback rather than the macOS default.
 _reg_vnc_open() {
-    local addr="$1"
+    local addr="$1" pw
+    pw=$(_reg_vnc_password) || pw=""
+
     if [[ -n $REG_VNC_CMD ]]; then
-        eval "$REG_VNC_CMD $addr"
-    elif [[ $OSTYPE == darwin* ]]; then
-        open "vnc://$addr"
+        VNC_PASSWORD="$pw" eval "$REG_VNC_CMD $addr"
     elif command -v vncviewer >/dev/null 2>&1; then
-        vncviewer "$addr" >/dev/null 2>&1 &!
+        VNC_PASSWORD="$pw" vncviewer "$addr" >/dev/null 2>&1 &!
+    elif [[ $OSTYPE == darwin* ]]; then
+        [[ -n $pw ]] && print -u2 "fvnc: Screen Sharing cannot take a password; install tiger-vnc"
+        open "vnc://$addr"
     elif command -v remmina >/dev/null 2>&1; then
         remmina -c "vnc://$addr" >/dev/null 2>&1 &!
     else
         print "no VNC viewer found — point yours at $addr"
-        print "set REG_VNC_CMD to choose one, e.g. REG_VNC_CMD=vncviewer"
+        print "install one: brew install tiger-vnc  /  sudo apt install tigervnc-viewer"
     fi
 }
 

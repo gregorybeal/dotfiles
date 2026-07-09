@@ -451,25 +451,60 @@ zle -N fzf-ssh-widget
 bindkey '^O' fzf-ssh-widget
 
 # ---------- Royal TSX ----------
-# frtsx [query] — pick a register and hand it to Royal TSX as an ad hoc
-# connection. Enter opens VNC, Ctrl-S opens SSH.
+# _reg_ip <host> — resolve a register hostname to its IP address.
+#
+# `ssh -G` parses the real ssh config (the Include, the Host ????reg?? wildcard
+# block, any local overrides) and prints the effective HostName without touching
+# the network. A host with no HostName makes ssh echo the host back, so treat
+# that as unresolved and fall through to the inventory database.
+_reg_ip() {
+    local host="$1" ip
+    ip=$(ssh -G "$host" 2>/dev/null | awk '/^hostname /{print $2; exit}')
+    if [[ -n $ip && $ip != $host ]]; then
+        print -r -- "$ip"
+        return 0
+    fi
+
+    if [[ -f $_REG_DB ]] && command -v sqlite3 >/dev/null 2>&1; then
+        # :gs (not //) — inside double quotes zsh leaves \' as backslash-quote,
+        # so the // form would emit o\'\'brien rather than SQL's o''brien.
+        ip=$(sqlite3 -readonly "$_REG_DB" \
+            "SELECT register_ip FROM registers WHERE register_hostname='${host:gs/'/''}';" 2>/dev/null)
+        if [[ -n $ip ]]; then
+            print -r -- "$ip"
+            return 0
+        fi
+    fi
+
+    print -u2 "no IP for $host: no HostName in the ssh config, and not in ${_REG_DB:t}"
+    return 1
+}
+
+# frtsx [query] — pick a register by hostname and hand it to Royal TSX as an ad
+# hoc connection. Enter opens VNC, Ctrl-S opens SSH.
+#
+# Royal TSX gets the IP, not the hostname: register names only resolve through
+# the generated ssh config, which Royal TSX does not read. You still search by
+# hostname — the IP is looked up after you pick.
 #
 # No tunnel and no credentials here: Royal TSX's ad hoc connection settings
 # already supply the secure gateway and the credential. The URI carries only
-# the protocol and the hostname, which is the form Royal Apps document
+# the protocol and the host, which is the form Royal Apps document
 # (rtsx://web://host). Escaping is only needed when the URI carries
 # user:pass@host:port, and query strings are ignored by Royal TSX on macOS.
 frtsx() {
     [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
 
-    local out key host proto
+    local out key host proto ip
     out=$(_reg_pick_expect rtsx ctrl-s 'enter=vnc   ctrl-s=ssh' "$1") || return
     local -a lines; lines=("${(@f)out}")
     key=${lines[1]}; host=${lines[2]}
     [[ -n $host ]] || return
 
+    ip=$(_reg_ip "$host") || return 1
     [[ $key == ctrl-s ]] && proto=ssh || proto=vnc
-    open "rtsx://${proto}://${host}"
+    print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${ip})%f"
+    open "rtsx://${proto}://${ip}"
 }
 
 # ---------- yazi directory jump ----------

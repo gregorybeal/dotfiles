@@ -12,28 +12,59 @@ _reg_hosts() {
     awk '/^Host / && $2 !~ /[?*]/ {print $2}' "$_REG_CONF"
 }
 
+# Sets `reply` to the fzf preview flags, or leaves it empty when there is
+# no database to preview from. Errors are deliberately not silenced: if the
+# db exists but the schema drifts, the query error shows in the preview pane
+# rather than vanishing into a blank box.
+_reg_preview_args() {
+    reply=()
+    [[ -f $_REG_DB ]] || return 0
+    command -v sqlite3 >/dev/null 2>&1 || return 0
+    reply=(
+        --preview "sqlite3 -readonly ${(q)_REG_DB} \
+            \"SELECT 'host : '||register_hostname||char(10)||'ip   : '||COALESCE(register_ip,'?') \
+               FROM registers WHERE register_hostname='{}';\""
+        --preview-window=down,3,wrap
+    )
+}
+
+# _reg_pick <prompt> [query] — the one picker every f* tool uses, so search,
+# preview and prompt style stay identical across them.
+_reg_pick() {
+    local prompt="$1" query="${2-}" all
+    local -a reply
+    all=$(_reg_hosts) || return
+    _reg_preview_args
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% \
+        --query="$query" "${reply[@]}"
+}
+
+# _reg_pick_multi <prompt> [query] — same, with Tab to multi-select
+_reg_pick_multi() {
+    local prompt="$1" query="${2-}" all
+    local -a reply
+    all=$(_reg_hosts) || return
+    _reg_preview_args
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% --multi \
+        --query="$query" "${reply[@]}"
+}
+
 # fssh [query] — fuzzy-pick a register and SSH in
 fssh() {
-    local host all
-    all=$(_reg_hosts) || return
-    host=$(print -r -- "$all" | fzf --prompt='ssh ❯ ' --reverse --height=40% \
-            --query="$1" \
-            --preview "sqlite3 -readonly '$_REG_DB' \
-              \"SELECT 'host : '||register_hostname||char(10)||'ip   : '||COALESCE(register_ip,'?') \
-                 FROM registers WHERE register_hostname='{}';\"" \
-            --preview-window=down,3,wrap) || return
+    local host
+    host=$(_reg_pick ssh "$1") || return
     [[ -n $host ]] && ssh "$host"
 }
 
 # frun [cmd] — run a command on one or more registers (Tab to multi-select)
 frun() {
-    local hosts all cmd="$*"
-    all=$(_reg_hosts) || return
+    local hosts cmd="$*"
+    _reg_hosts >/dev/null || return
     if [[ -z $cmd ]]; then
         echo -n "command ❯ "; read -r cmd
     fi
     [[ -z $cmd ]] && return
-    hosts=$(print -r -- "$all" | fzf --prompt='run ❯ ' --reverse --height=40% --multi) || return
+    hosts=$(_reg_pick_multi run) || return
     [[ -z $hosts ]] && return
     while IFS= read -r h; do
         print -P "%F{cyan}=== $h ===%f"
@@ -121,10 +152,8 @@ fmount() {
     local rw=0
     [[ $1 == -w ]] && { rw=1; shift }
 
-    local all host
-    all=$(_reg_hosts) || return
-    host=$(print -r -- "$all" \
-            | fzf --prompt='mount ❯ ' --reverse --height=40% --query="$1") || return
+    local host
+    host=$(_reg_pick mount "$1") || return
     [[ -n $host ]] || return
 
     local mp="$_REG_MNT/$host"
@@ -197,14 +226,17 @@ fmounts() {
 _REG_VNC_PORT="${REG_VNC_PORT:-5900}"   # VNC port on the register
 _REG_VNC_BASE="${REG_VNC_BASE:-5901}"   # first local port to try
 
+# Test bindability rather than inspecting the listener table: zsh/net/tcp is
+# a builtin module, so this behaves identically on macOS and Linux and needs
+# no privileges. `lsof` cannot see other users' listening sockets unless run
+# as root, and would report a busy port as free; macOS has no `ss` at all.
 _reg_port_free() {
-    if command -v ss >/dev/null 2>&1; then
-        [[ -z "$(ss -ltnH "sport = :$1" 2>/dev/null)" ]]
-    elif command -v lsof >/dev/null 2>&1; then
-        ! lsof -iTCP:"$1" -sTCP:LISTEN -Pn >/dev/null 2>&1
-    else
+    zmodload -s zsh/net/tcp 2>/dev/null || return 0   # cannot check; assume free
+    if ztcp -l "$1" 2>/dev/null; then
+        ztcp -c "$REPLY" 2>/dev/null
         return 0
     fi
+    return 1
 }
 
 _reg_free_port() {
@@ -218,17 +250,22 @@ _reg_free_port() {
 }
 
 # Active fvnc tunnels, one "pid lport host" per line.
-# `ps -ax -o` rather than `-eo`: on macOS `ps -e` means "show environment".
+# `-ax` not `-e`: on macOS `ps -e` means "show environment".
+# `-ww`: macOS ps truncates args to terminal width, which would cut the
+# trailing hostname off our tunnel's command line.
 _reg_vnc_tunnels() {
-    ps -ax -o pid=,args= 2>/dev/null | awk -v rport=":localhost:$_REG_VNC_PORT" '
-        # $2 is the executable: anchor on it so an unrelated command line that
-        # merely mentions the forward spec is not mistaken for a tunnel.
-        $2 != "ssh" && $2 !~ /\/ssh$/ { next }
+    ps -axww -o uid=,pid=,args= 2>/dev/null \
+      | awk -v me="$(id -u)" -v rport=":localhost:$_REG_VNC_PORT" '
+        $1 != me { next }                        # only our own processes
+        $3 != "ssh" && $3 !~ /\/ssh$/ { next }   # anchor on the executable, so an
+                                                 # unrelated command line that merely
+                                                 # mentions the forward spec is skipped
         {
-            pid = $1; host = $NF; lport = ""
+            pid = $2; host = $NF; lport = ""
             for (i = 1; i <= NF; i++)
-                if ($i == "-L" && index($(i+1), "127.0.0.1:") == 1 \
-                              && index($(i+1), rport) > 0) {
+                if ($i == "-L" &&
+                    index($(i+1), "127.0.0.1:") == 1 &&
+                    index($(i+1), rport) > 0) {
                     split($(i+1), a, ":"); lport = a[2]
                 }
             if (lport != "") print pid, lport, host
@@ -253,10 +290,8 @@ _reg_vnc_open() {
 
 # fvnc [query] — tunnel to a register's VNC port and open a viewer
 fvnc() {
-    local all host lport
-    all=$(_reg_hosts) || return
-    host=$(print -r -- "$all" \
-            | fzf --prompt='vnc ❯ ' --reverse --height=40% --query="$1") || return
+    local host lport
+    host=$(_reg_pick vnc "$1") || return
     [[ -n $host ]] || return
 
     # Reuse an existing tunnel to this host instead of stacking another.
@@ -316,9 +351,8 @@ fvnc-kill() {
 
 # Ctrl-G — inline fuzzy register picker (inserts hostname at cursor)
 fzf-reg-widget() {
-    local selected all
-    all=$(_reg_hosts) || { zle reset-prompt; return }
-    selected=$(print -r -- "$all" | fzf --height=40% --reverse --multi --prompt='reg ❯ ') || return
+    local selected
+    selected=$(_reg_pick_multi reg) || { zle reset-prompt; return }
     [[ -z $selected ]] && { zle reset-prompt; return }
     LBUFFER+="${selected//$'\n'/ }"
     zle reset-prompt
@@ -330,11 +364,8 @@ bindkey '^G' fzf-reg-widget
 # Sets the buffer rather than calling ssh from inside the widget: zle owns
 # the terminal here, and it lands the command in history for atuin/Ctrl-R.
 fzf-ssh-widget() {
-    local host all
-    all=$(_reg_hosts) || { zle reset-prompt; return }
-    host=$(print -r -- "$all" | fzf --height=40% --reverse --prompt='ssh ❯ ') || {
-        zle reset-prompt; return
-    }
+    local host
+    host=$(_reg_pick ssh) || { zle reset-prompt; return }
     [[ -z $host ]] && { zle reset-prompt; return }
     BUFFER="ssh ${(q)host}"
     zle accept-line

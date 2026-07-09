@@ -206,6 +206,22 @@ fzf-reg-widget() {
 zle -N fzf-reg-widget
 bindkey '^G' fzf-reg-widget
 
+# Ctrl-O — pick a register and ssh straight in.
+# Sets the buffer rather than calling ssh from inside the widget: zle owns
+# the terminal here, and it lands the command in history for atuin/Ctrl-R.
+fzf-ssh-widget() {
+    local host all
+    all=$(_reg_hosts) || { zle reset-prompt; return }
+    host=$(print -r -- "$all" | fzf --height=40% --reverse --prompt='ssh ❯ ') || {
+        zle reset-prompt; return
+    }
+    [[ -z $host ]] && { zle reset-prompt; return }
+    BUFFER="ssh ${(q)host}"
+    zle accept-line
+}
+zle -N fzf-ssh-widget
+bindkey '^O' fzf-ssh-widget
+
 # ---------- yazi directory jump ----------
 function y() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd

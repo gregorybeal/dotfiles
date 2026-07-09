@@ -12,10 +12,56 @@ _reg_hosts() {
     awk '/^Host / && $2 !~ /[?*]/ {print $2}' "$_REG_CONF"
 }
 
-# Sets `reply` to the fzf preview flags, or leaves it empty when there is
-# no database to preview from. Errors are deliberately not silenced: if the
-# db exists but the schema drifts, the query error shows in the preview pane
-# rather than vanishing into a blank box.
+# Find the table and columns that hold hostnames and IPs, printed as
+# "table<TAB>hostcol<TAB>ipcol". Nothing about the inventory db's schema is
+# guaranteed — the name "registers" was inherited from gen_ssh_registers.py and
+# is not always right — so discover it instead of assuming, and let the user
+# pin it with REG_DB_TABLE / REG_DB_HOST_COL / REG_DB_IP_COL.
+_reg_db_schema() {
+    if [[ -n $REG_DB_TABLE && -n $REG_DB_HOST_COL ]]; then
+        print -r -- "${REG_DB_TABLE}"$'\t'"${REG_DB_HOST_COL}"$'\t'"${REG_DB_IP_COL:-}"
+        return 0
+    fi
+
+    local -a tables cols
+    local t hostc ipc c
+    tables=(${(f)"$(sqlite3 -readonly "$_REG_DB" \
+        "SELECT name FROM sqlite_master WHERE type IN ('table','view');" 2>/dev/null)"})
+
+    for t in $tables; do
+        cols=(${(f)"$(sqlite3 -readonly "$_REG_DB" "PRAGMA table_info('$t');" 2>/dev/null \
+            | awk -F'|' '{print $2}')"})
+        (( ${#cols} )) || continue
+
+        # Prefer the most specific name, then anything host-ish.
+        hostc=""
+        for c in register_hostname hostname host_name host; do
+            (( ${cols[(I)$c]} )) && { hostc=$c; break }
+        done
+        [[ -n $hostc ]] || for c in $cols; do
+            [[ ${c:l} == *host* ]] && { hostc=$c; break }
+        done
+        [[ -n $hostc ]] || continue
+
+        ipc=""
+        for c in register_ip ip_address ipaddress ip addr; do
+            (( ${cols[(I)$c]} )) && { ipc=$c; break }
+        done
+        [[ -n $ipc ]] || for c in $cols; do
+            [[ ${c:l} == *ip* ]] && { ipc=$c; break }
+        done
+
+        print -r -- "$t"$'\t'"$hostc"$'\t'"$ipc"
+        return 0
+    done
+    return 1
+}
+
+# Sets `reply` to the fzf preview flags, or leaves it empty when there is no
+# database, no sqlite3, or no table that looks like an inventory. A missing
+# table is a configuration fact, not a per-keystroke error, so it produces no
+# preview rather than an error smeared across the pane. A query that fails at
+# runtime still shows its error there.
 #
 # fzf substitutes {} with a *shell-quoted* token — 0003reg01 arrives as
 # '0003reg01' — so it must not be wrapped in quotes again, or sqlite sees
@@ -26,8 +72,17 @@ _reg_preview_args() {
     reply=()
     [[ -f $_REG_DB ]] || return 0
     command -v sqlite3 >/dev/null 2>&1 || return 0
-    local sql="SELECT 'host : '||register_hostname||char(10)||'ip   : '||COALESCE(register_ip,'?') FROM registers WHERE register_hostname="
-    # sqlite's stderr is left attached, so a schema error still shows in the pane.
+
+    local schema tbl hostc ipc
+    schema=$(_reg_db_schema) || return 0
+    tbl=${schema%%$'\t'*}
+    hostc=${${schema#*$'\t'}%%$'\t'*}
+    ipc=${schema##*$'\t'}
+
+    local ipsel="'?'"
+    [[ -n $ipc ]] && ipsel="COALESCE(\"$ipc\",'?')"
+    local sql="SELECT 'host : '||\"$hostc\"||char(10)||'ip   : '||$ipsel FROM \"$tbl\" WHERE \"$hostc\"="
+
     reply=(
         --preview "h={}; case \$h in \
                      *[!A-Za-z0-9_.-]*) printf 'host : %s\\n(no preview)\\n' \"\$h\";; \
@@ -465,14 +520,21 @@ _reg_ip() {
         return 0
     fi
 
+    ip=""   # ssh -G echoed the host back; don't let that leak into the result
     if [[ -f $_REG_DB ]] && command -v sqlite3 >/dev/null 2>&1; then
-        # :gs (not //) — inside double quotes zsh leaves \' as backslash-quote,
-        # so the // form would emit o\'\'brien rather than SQL's o''brien.
-        ip=$(sqlite3 -readonly "$_REG_DB" \
-            "SELECT register_ip FROM registers WHERE register_hostname='${host:gs/'/''}';" 2>/dev/null)
-        if [[ -n $ip ]]; then
-            print -r -- "$ip"
-            return 0
+        local schema tbl hostc ipc
+        if schema=$(_reg_db_schema); then
+            tbl=${schema%%$'\t'*}
+            hostc=${${schema#*$'\t'}%%$'\t'*}
+            ipc=${schema##*$'\t'}
+            # :gs (not //) — inside double quotes zsh leaves \' as backslash-quote,
+            # so the // form would emit o\'\'brien rather than SQL's o''brien.
+            [[ -n $ipc ]] && ip=$(sqlite3 -readonly "$_REG_DB" \
+                "SELECT \"$ipc\" FROM \"$tbl\" WHERE \"$hostc\"='${host:gs/'/''}';" 2>/dev/null)
+            if [[ -n $ip ]]; then
+                print -r -- "$ip"
+                return 0
+            fi
         fi
     fi
 

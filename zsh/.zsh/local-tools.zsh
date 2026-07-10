@@ -549,13 +549,51 @@ _reg_realvnc_config() {
     print -r -- "$out"
 }
 
-# Viewer preference:
+# Percent-encode for a URL: everything outside the unreserved set. Byte-wise,
+# so a non-ASCII password survives. perl is on every macOS; the zsh fallback is
+# ASCII-only but never runs there.
+_reg_urlenc() {
+    if command -v perl >/dev/null 2>&1; then
+        print -rn -- "$1" | perl -pe 's/([^A-Za-z0-9._~-])/sprintf("%%%02X", ord($1))/ge'
+        return
+    fi
+    local s=$1 out="" c i
+    for (( i = 1; i <= ${#s}; i++ )); do
+        c=$s[i]
+        case $c in
+            [A-Za-z0-9._~-]) out+=$c ;;
+            *) out+=$(printf '%%%02X' "'$c") ;;
+        esac
+    done
+    print -rn -- "$out"
+}
+
+# Apple's Screen Sharing. It scales client-side (View → Turn Scaling On, which
+# persists — every register is 127.0.0.1, so set it once), and it does take a
+# password: vnc://user:pass@host.
+#
+# The URL goes to osascript on *stdin*, never in argv, so the password cannot be
+# read out of `ps`. printf is a zsh builtin, so it forks nothing either.
+# Classic VNC auth carries no username, hence the leading colon: vnc://:pass@host
+_reg_vnc_screensharing() {
+    local addr="$1" pw="$2" user="$3" cred=""
+    if [[ -n $pw ]]; then
+        cred="$(_reg_urlenc "$user"):$(_reg_urlenc "$pw")@"
+    elif [[ -n $user ]]; then
+        cred="$(_reg_urlenc "$user")@"
+    fi
+    printf 'tell application "Screen Sharing" to open location "vnc://%s%s"\n' \
+        "$cred" "$addr" | osascript -
+}
+
+# Viewer preference. Force one with REG_VNC_VIEWER=realvnc|screensharing|tigervnc.
 #   1. REG_VNC_CMD                     — an explicit override
 #   2. RealVNC + exported .vnc config  — scales (Scaling=AspectFit) and carries
 #                                        its own saved password, so no prompt
 #   3. TigerVNC (vncviewer on PATH)    — takes VNC_PASSWORD from the environment,
 #                                        but has NO client-side scaling at all
-#   4. Screen Sharing / remmina        — cannot be fed a password
+#   4. Screen Sharing                  — scales, takes the password in the URL
+#   5. remmina                         — Linux fallback
 _reg_vnc_open() {
     local addr="$1" pw
     pw=$(_reg_vnc_password) || pw=""
@@ -565,6 +603,36 @@ _reg_vnc_open() {
     local user="${REG_VNC_USER:-}"
 
     local rbin rcfg
+    case ${REG_VNC_VIEWER:l} in
+        screensharing|screen-sharing|apple)
+            if [[ $OSTYPE != darwin* ]]; then
+                print -u2 "fvnc: Screen Sharing is macOS-only"
+                return 1
+            fi
+            _reg_vnc_screensharing "$addr" "$pw" "$user"
+            return
+            ;;
+        realvnc)
+            if rbin=$(_reg_realvnc_bin) && rcfg=$(_reg_realvnc_config "${addr##*:}"); then
+                "$rbin" -config "$rcfg" >/dev/null 2>&1 &!
+                ( sleep 10; rm -f "$rcfg" ) >/dev/null 2>&1 &!
+            else
+                print -u2 "fvnc: REG_VNC_VIEWER=realvnc but no viewer or template"
+                return 1
+            fi
+            return
+            ;;
+        tigervnc)
+            if ! command -v vncviewer >/dev/null 2>&1; then
+                print -u2 "fvnc: REG_VNC_VIEWER=tigervnc but vncviewer is not on PATH"
+                return 1
+            fi
+            VNC_USERNAME="$user" VNC_PASSWORD="$pw" \
+                vncviewer -ViewOnly=0 -RemoteResize=0 ${=REG_VNC_ARGS} "$addr" >/dev/null 2>&1 &!
+            return
+            ;;
+    esac
+
     if [[ -n $REG_VNC_CMD ]]; then
         VNC_USERNAME="$user" VNC_PASSWORD="$pw" eval "$REG_VNC_CMD $addr"
     elif rbin=$(_reg_realvnc_bin) && rcfg=$(_reg_realvnc_config "${addr##*:}"); then
@@ -588,8 +656,7 @@ _reg_vnc_open() {
         VNC_USERNAME="$user" VNC_PASSWORD="$pw" \
             vncviewer -ViewOnly=0 -RemoteResize=0 ${=REG_VNC_ARGS} "$addr" >/dev/null 2>&1 &!
     elif [[ $OSTYPE == darwin* ]]; then
-        [[ -n $pw ]] && print -u2 "fvnc: Screen Sharing cannot take a password; install tiger-vnc"
-        open "vnc://$addr"
+        _reg_vnc_screensharing "$addr" "$pw" "$user"
     elif command -v remmina >/dev/null 2>&1; then
         remmina -c "vnc://$addr" >/dev/null 2>&1 &!
     else

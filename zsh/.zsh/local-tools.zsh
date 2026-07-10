@@ -2,6 +2,9 @@
 _REG_CONF="${REG_CONF:-$HOME/.ssh/conf.d/registers}"
 _REG_DB="${REG_DB:-$HOME/store_registers.db}"
 _REG_MNT="${REG_MNT:-$HOME/mnt/reg}"
+# Formatter for the fzf preview pane, kept beside this file. %x is the file
+# being sourced; :A resolves the stow symlink back into the repo.
+_REG_PREVIEW_AWK="${${(%):-%x}:A:h}/reg-preview.awk"
 
 _reg_hosts() {
     if [[ ! -f $_REG_CONF ]]; then
@@ -141,12 +144,28 @@ _reg_preview_args() {
     local regsel; regsel=$(_reg_db_sel "$tbl") || regsel='*'
     local regq="sqlite3 -readonly -line $db \"SELECT $regsel FROM \\\"$tbl\\\" WHERE \\\"$hostc\\\"='\$h';\""
 
+    # The awk formatter aligns and colours the rows. Without it, fall back to
+    # sqlite's own -line output rather than losing the preview entirely.
+    # `registers` -> strip `register_`; `stores` -> strip `store_`. A table whose
+    # name does not fit that pattern simply gets no prefix stripped.
+    local nocolor=""
+    [[ ${REG_PREVIEW_COLOR:-1} == 0 ]] && nocolor="-v nocolor=1"
+    local fmt_reg="cat" fmt_store="cat"
+    local regstrip="${tbl%s}_"
+    if [[ -r $_REG_PREVIEW_AWK ]]; then
+        local awkf=${(q)_REG_PREVIEW_AWK}
+        fmt_reg="awk -v title=' register' -v strip=${(q)regstrip} $nocolor -f $awkf"
+    fi
+
     # The store join is optional: plenty of inventories have no stores table.
     local storeq="" sschema stbl skey storesel where
     if sschema=$(_reg_db_store); then
         stbl=${sschema%%$'\t'*}
         skey=${sschema##*$'\t'}
         storesel=$(_reg_db_sel "$stbl") || storesel='*'
+        local storestrip="${stbl%s}_"
+        [[ -r $_REG_PREVIEW_AWK ]] && \
+            fmt_store="awk -v title=' store' -v strip=${(q)storestrip} $nocolor -f ${(q)_REG_PREVIEW_AWK}"
 
         # Prefer a real foreign key on the register row over deriving the store
         # from the hostname prefix. The prefix form only matches by accident when
@@ -159,15 +178,15 @@ _reg_preview_args() {
         fi
 
         storeq="s=\$(sqlite3 -readonly -line $db \"SELECT $storesel FROM \\\"$stbl\\\" WHERE $where;\"); \
-                [ -n \"\$s\" ] && { printf '\\n'; printf '%s\\n' \"\$s\"; };"
+                [ -n \"\$s\" ] && { printf '\\n'; printf '%s\\n' \"\$s\" | $fmt_store; };"
     fi
 
     reply=(
         --preview "h={}; case \$h in \
-                     *[!A-Za-z0-9_.-]*) printf 'host : %s\\n(no preview)\\n' \"\$h\";; \
+                     *[!A-Za-z0-9_.-]*) printf ' %s\\n (no preview)\\n' \"\$h\";; \
                      *) r=\$($regq); \
-                        if [ -n \"\$r\" ]; then printf '%s\\n' \"\$r\"; \
-                        else printf 'host : %s\\n(not in %s)\\n' \"\$h\" ${(q)_REG_DB:t}; fi; \
+                        if [ -n \"\$r\" ]; then printf '%s\\n' \"\$r\" | $fmt_reg; \
+                        else printf ' %s\\n (not in %s)\\n' \"\$h\" ${(q)_REG_DB:t}; fi; \
                         $storeq ;; \
                    esac"
         --preview-window=right,50%,wrap
@@ -181,7 +200,7 @@ _reg_pick() {
     local -a reply
     all=$(_reg_hosts) || return
     _reg_preview_args
-    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% \
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% \
         --query="$query" "${reply[@]}"
 }
 
@@ -193,7 +212,7 @@ _reg_pick_expect() {
     local -a reply
     all=$(_reg_hosts) || return
     _reg_preview_args
-    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% --multi \
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% --multi \
         --query="$query" --header="$header" --expect="$keys" "${reply[@]}"
 }
 
@@ -203,7 +222,7 @@ _reg_pick_multi() {
     local -a reply
     all=$(_reg_hosts) || return
     _reg_preview_args
-    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=40% --multi \
+    print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% --multi \
         --query="$query" "${reply[@]}"
 }
 

@@ -734,6 +734,26 @@ frtsx() {
     return $rc
 }
 
+# Ctrl-P — open the Royal TSX picker straight from the prompt.
+# Unlike Ctrl-O (which fills the buffer with `ssh <host>` so it lands in
+# history), frtsx hands off to another application: there is no command worth
+# recording, so run it in place. `zle -I` invalidates the display first, since
+# frtsx prints; `zle reset-prompt` redraws afterwards.
+# ^P was zsh's default up-line-or-history, which nothing configures here and
+# which atuin already owns on the Up arrow.
+fzf-rtsx-widget() {
+    zle -I
+    frtsx
+    zle reset-prompt
+}
+zle -N fzf-rtsx-widget
+# zsh-vi-mode restores ^P to up-line-or-history when it initialises, so binding
+# it here is not enough — register through zvm's hook so it survives. (^O and ^G
+# are left alone by zvm, which is why they bind directly.) The plain bindkey is
+# the no-zvm fallback.
+bindkey '^P' fzf-rtsx-widget
+zvm_after_init_commands+=('bindkey "^P" fzf-rtsx-widget')
+
 # ---------- yazi directory jump ----------
 function y() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd

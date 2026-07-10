@@ -408,13 +408,6 @@ fmounts() {
 _REG_VNC_PORT="${REG_VNC_PORT:-5900}"    # VNC port on the register
 _REG_VNC_BASE="${REG_VNC_BASE:-5901}"    # first local port to try
 _REG_VNC_GRACE="${REG_VNC_GRACE:-20}"    # seconds for the viewer to connect
-# A RealVNC connection file exported once from the GUI, with the password saved.
-# fvnc rewrites its host/port per tunnel and forces Scaling.
-_REG_VNC_TEMPLATE="${REG_VNC_TEMPLATE:-$HOME/.config/fvnc/register.vnc}"
-# Client-side scale: the viewer resizes what it draws, the register's own
-# display is untouched. RealVNC's exports omit this key entirely, so set it.
-# AspectFit keeps the aspect ratio; Fit stretches; None gives scrollbars.
-_REG_VNC_SCALING="${REG_VNC_SCALING:-AspectFit}"
 
 # Test bindability rather than inspecting the listener table: zsh/net/tcp is
 # a builtin module, so this behaves identically on macOS and Linux and needs
@@ -486,69 +479,6 @@ _reg_vnc_password() {
     print -r -- "$pw"
 }
 
-# RealVNC's viewer binary. Named `vncviewer` too, so never look it up on PATH —
-# that is TigerVNC's. Override with REG_VNC_BIN.
-_reg_realvnc_bin() {
-    if [[ -n $REG_VNC_BIN ]]; then
-        [[ -x $REG_VNC_BIN ]] && { print -r -- "$REG_VNC_BIN"; return 0 }
-        return 1
-    fi
-    local p="/Applications/VNC Viewer.app/Contents/MacOS/vncviewer"
-    [[ -x $p ]] && { print -r -- "$p"; return 0 }
-    return 1
-}
-
-# Copy the exported .vnc template, pointing it at this tunnel's local port, and
-# print the temp file's path. The format is not assumed: whichever host (and
-# optional port) key the exported file actually uses is rewritten in place, so
-# the saved password, Scaling and everything else carry over untouched.
-# Pure zsh on purpose: `grep` is aliased to `rg` in this shell, and zsh expands
-# aliases when a function is *defined*, so a bare grep here silently became rg.
-# No external text tools, no alias can reach it.
-_reg_realvnc_config() {
-    local lport="$1" tmpl="$_REG_VNC_TEMPLATE" out
-    [[ -f $tmpl ]] || return 1
-
-    local -a lines
-    lines=("${(@f)$(<"$tmpl")}")
-
-    # Some exports glue the port onto Host=, others keep a separate Port= line.
-    local l key has_port=0
-    for l in $lines; do
-        key=${${${l%%=*}//[[:space:]]/}:l}
-        [[ $key == port ]] && has_port=1
-    done
-
-    out=$(mktemp "${TMPDIR:-/tmp}/fvnc-XXXXXX") || return 1
-    chmod 600 "$out"
-
-    local seen_host=0 seen_scaling=0
-    {
-        # Quoted expansion: unquoted `$lines` would silently drop blank lines.
-        for l in "${lines[@]}"; do
-            key=${${${l%%=*}//[[:space:]]/}:l}
-            case $key in
-                host)
-                    seen_host=1
-                    if (( has_port )); then print -r -- "Host=127.0.0.1"
-                    else print -r -- "Host=127.0.0.1:${lport}"; fi ;;
-                port)    print -r -- "Port=${lport}" ;;
-                scaling) seen_scaling=1; print -r -- "Scaling=${_REG_VNC_SCALING}" ;;
-                *)       print -r -- "$l" ;;
-            esac
-        done
-        # RealVNC's export omits Scaling when it is at the default, so add it.
-        (( seen_scaling )) || print -r -- "Scaling=${_REG_VNC_SCALING}"
-    } >"$out"
-
-    if (( ! seen_host )); then
-        print -u2 "fvnc: no Host= line in $tmpl — is that a RealVNC connection file?"
-        rm -f "$out"
-        return 1
-    fi
-    print -r -- "$out"
-}
-
 # Percent-encode for a URL: everything outside the unreserved set. Byte-wise,
 # so a non-ASCII password survives. perl is on every macOS; the zsh fallback is
 # ASCII-only but never runs there.
@@ -586,14 +516,12 @@ _reg_vnc_screensharing() {
         "$cred" "$addr" | osascript -
 }
 
-# Viewer preference. Force one with REG_VNC_VIEWER=realvnc|screensharing|tigervnc.
-#   1. REG_VNC_CMD                     — an explicit override
-#   2. RealVNC + exported .vnc config  — scales (Scaling=AspectFit) and carries
-#                                        its own saved password, so no prompt
-#   3. TigerVNC (vncviewer on PATH)    — takes VNC_PASSWORD from the environment,
-#                                        but has NO client-side scaling at all
-#   4. Screen Sharing                  — scales, takes the password in the URL
-#   5. remmina                         — Linux fallback
+# Viewer:
+#   1. REG_VNC_CMD    — an explicit override, given the address; VNC_USERNAME and
+#                       VNC_PASSWORD are exported for it
+#   2. Screen Sharing — macOS. Scales client-side (View → Turn Scaling On, which
+#                       persists) and takes the password in the URL
+#   3. remmina        — Linux
 _reg_vnc_open() {
     local addr="$1" pw
     pw=$(_reg_vnc_password) || pw=""
@@ -602,66 +530,15 @@ _reg_vnc_open() {
     # the SSH login, which the ssh config already supplies.
     local user="${REG_VNC_USER:-}"
 
-    local rbin rcfg
-    case ${REG_VNC_VIEWER:l} in
-        screensharing|screen-sharing|apple)
-            if [[ $OSTYPE != darwin* ]]; then
-                print -u2 "fvnc: Screen Sharing is macOS-only"
-                return 1
-            fi
-            _reg_vnc_screensharing "$addr" "$pw" "$user"
-            return
-            ;;
-        realvnc)
-            if rbin=$(_reg_realvnc_bin) && rcfg=$(_reg_realvnc_config "${addr##*:}"); then
-                "$rbin" -config "$rcfg" >/dev/null 2>&1 &!
-                ( sleep 10; rm -f "$rcfg" ) >/dev/null 2>&1 &!
-            else
-                print -u2 "fvnc: REG_VNC_VIEWER=realvnc but no viewer or template"
-                return 1
-            fi
-            return
-            ;;
-        tigervnc)
-            if ! command -v vncviewer >/dev/null 2>&1; then
-                print -u2 "fvnc: REG_VNC_VIEWER=tigervnc but vncviewer is not on PATH"
-                return 1
-            fi
-            VNC_USERNAME="$user" VNC_PASSWORD="$pw" \
-                vncviewer -ViewOnly=0 -RemoteResize=0 ${=REG_VNC_ARGS} "$addr" >/dev/null 2>&1 &!
-            return
-            ;;
-    esac
-
     if [[ -n $REG_VNC_CMD ]]; then
         VNC_USERNAME="$user" VNC_PASSWORD="$pw" eval "$REG_VNC_CMD $addr"
-    elif rbin=$(_reg_realvnc_bin) && rcfg=$(_reg_realvnc_config "${addr##*:}"); then
-        "$rbin" -config "$rcfg" >/dev/null 2>&1 &!
-        # The viewer reads the config at startup; give it a moment, then remove
-        # it — it holds the saved password.
-        ( sleep 10; rm -f "$rcfg" ) >/dev/null 2>&1 &!
-    elif command -v vncviewer >/dev/null 2>&1; then
-        # -ViewOnly=0 explicitly: TigerVNC persists settings to default.tigervnc,
-        # and a saved ViewOnly=1 silently swallows every keystroke and click.
-        #
-        # -RemoteResize=0: it defaults to *true*, which asks the register to
-        # change its own screen resolution as this window is resized. Never do
-        # that to a live POS terminal. Disabling it leaves the remote untouched;
-        # the desktop is then shown 1:1 with scrollbars, because TigerVNC has no
-        # client-side scaling at all (zero mentions of "scal" in 1.16.2's
-        # parameters.cxx / DesktopWindow.cxx). RealVNC above is the viewer that
-        # scales client-side; this branch is a fallback that will not fit.
-        #
-        # $REG_VNC_ARGS goes last so it can override anything set here.
-        VNC_USERNAME="$user" VNC_PASSWORD="$pw" \
-            vncviewer -ViewOnly=0 -RemoteResize=0 ${=REG_VNC_ARGS} "$addr" >/dev/null 2>&1 &!
     elif [[ $OSTYPE == darwin* ]]; then
         _reg_vnc_screensharing "$addr" "$pw" "$user"
     elif command -v remmina >/dev/null 2>&1; then
         remmina -c "vnc://$addr" >/dev/null 2>&1 &!
     else
         print "no VNC viewer found — point yours at $addr"
-        print "install one: brew install tiger-vnc  /  sudo apt install tigervnc-viewer"
+        print "set REG_VNC_CMD to launch one"
     fi
 }
 

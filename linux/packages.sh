@@ -21,7 +21,7 @@ sudo apt-get install -y \
     `# Modern CLI tools` \
     fzf bat fd-find ripgrep jq htop btop \
     `# Network / SSH` \
-    openssh-client mtr nmap iperf3 sshpass sshfs tigervnc-viewer \
+    openssh-client mtr nmap iperf3 sshpass sshfs \
     `# Dev` \
     sqlite3 ansible
 

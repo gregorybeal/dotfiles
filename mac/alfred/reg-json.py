@@ -84,7 +84,10 @@ def main():
             host, m.get("store"), m.get("city"), m.get("state"),
             m.get("regional"), ip) if x)
 
-        arg = lambda proto: "{}\t{}{}".format(proto, cred, target)
+        # "<proto> <target>" — a plain space, so Alfred's "input as argv" splits
+        # it into $1=proto $2=target. target has no spaces (hostname/IP, or
+        # user?@host), so this is unambiguous.
+        arg = lambda proto: "{} {}{}".format(proto, cred, target)
         items.append({
             "uid": host,
             "title": host,

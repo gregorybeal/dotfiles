@@ -700,15 +700,72 @@ _reg_ip() {
     return 1
 }
 
+# Is <name> mapped in /etc/hosts? Royal TSX resolves through the system
+# resolver, not ~/.ssh/config, so a hosts entry is what lets it take a register
+# by name — and the tab title is then the hostname instead of a bare IP.
+# Install the entries with: gen_ssh_registers.py --format hosts --install-hosts
+_reg_in_etc_hosts() {
+    local hf=${REG_HOSTS_FILE:-/etc/hosts}
+    [[ -r $hf ]] || return 1
+    # Strip comments first, then match only alias fields — never the IP in $1.
+    awk -v n="$1" '
+        { sub(/#.*/, "") }
+        NF >= 2 { for (i = 2; i <= NF; i++) if ($i == n) { found = 1; exit } }
+        END { exit !found }' "$hf"
+}
+
+# What to hand Royal TSX for <host>: the hostname when the system can resolve
+# it, else the IP. REG_RTSX_TARGET=hostname|ip forces one.
+_reg_rtsx_target() {
+    local host="$1"
+    case ${REG_RTSX_TARGET:l} in
+        hostname) print -r -- "$host"; return 0 ;;
+        ip)       _reg_ip "$host"; return ;;
+    esac
+    if _reg_in_etc_hosts "$host"; then
+        print -r -- "$host"
+        return 0
+    fi
+    _reg_ip "$host"
+}
+
+# Hand a connection string to Royal TSX.
+#
+# `adhoc` is a documented AppleScript command taking the same string the URL
+# scheme carries. It is preferred over `open rtsx://…` because osascript reports
+# an error when the app rejects the command, whereas `open` returns 0 as soon as
+# LaunchServices accepts the URL — Royal Apps' own note that a query string
+# "fails without error" is that gap. It also needs no URL escaping and does not
+# depend on the rtsx:// handler still being registered.
+#
+# The catch is macOS automation permission (TCC): the first call prompts, and a
+# denied prompt makes osascript fail. `open` needs no permission, so it stays as
+# the fallback.
+_reg_rtsx_adhoc() {
+    local conn="$1"
+    if command -v osascript >/dev/null 2>&1; then
+        printf 'tell application "Royal TSX" to adhoc "%s"\n' "$conn" \
+            | osascript - >/dev/null 2>&1 && return 0
+        print -u2 "frtsx: osascript adhoc failed (automation permission?); using open"
+    fi
+    open "rtsx://${conn}"
+}
+
 # frtsx [query] — pick a register by hostname and hand it to Royal TSX as an ad
 # hoc connection. Enter opens VNC, Ctrl-S opens SSH, Ctrl-F opens SFTP.
 #
 # sftp:// is not in Royal Apps' published list of protocol identifiers, but it
-# works — verified against a real Royal TSX.
+# works — verified against a real Royal TSX. Its `protocol` property shows why:
+# the valid values include FileTransfer.
 #
-# Royal TSX gets the IP, not the hostname: register names only resolve through
-# the generated ssh config, which Royal TSX does not read. You still search by
-# hostname — the IP is looked up after you pick.
+# Royal TSX does not read ~/.ssh/config, so a register name only works if
+# /etc/hosts maps it. With the hosts block installed you get the hostname in the
+# tab title; without it, frtsx falls back to the IP. You always search by
+# hostname either way.
+#
+# REG_RTSX_USER preselects a credential (user?@host). That form is unusable
+# through `open`, since ? starts a query string and Royal TSX ignores those on
+# macOS — it works only on the adhoc path.
 #
 # No tunnel and no credentials here: Royal TSX's ad hoc connection settings
 # already supply the secure gateway and the credential. The URI carries only
@@ -731,10 +788,13 @@ frtsx() {
         ctrl-f) proto=sftp ;;
         *)      proto=vnc  ;;   # Enter
     esac
+
+    local target cred=""
+    [[ -n $REG_RTSX_USER ]] && cred="${REG_RTSX_USER}?@"
     for host in $hosts; do
-        if ip=$(_reg_ip "$host"); then
-            print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${ip})%f"
-            open "rtsx://${proto}://${ip}"
+        if target=$(_reg_rtsx_target "$host"); then
+            print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${target})%f"
+            _reg_rtsx_adhoc "${proto}://${cred}${target}"
         else
             rc=1
         fi

@@ -9,11 +9,15 @@
 emulate -L zsh
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-local input="${1:-$*}"
-local proto="${input%%$'\t'*}"
-local target="${input#*$'\t'}"
-[[ -n $proto && -n $target && $proto != $target ]] || {
-    print -u2 "reg-connect: bad input: $input"
+# Alfred "input as argv" gives us $1=proto $2=target. Also accept a single
+# space- or tab-delimited argument, so `reg-connect.zsh "vnc host"` works too.
+local proto="$1" target="$2"
+if [[ -z $target && $proto == *[[:space:]]* ]]; then
+    target="${proto#*[[:space:]]}"
+    proto="${proto%%[[:space:]]*}"
+fi
+[[ -n $proto && -n $target ]] || {
+    print -u2 "reg-connect: expected '<proto> <target>', got: $*"
     exit 1
 }
 

@@ -114,6 +114,69 @@ _reg_db_sel() {
     print -r -- "$out"
 }
 
+# "hostname<TAB>store<TAB>city<TAB>state<TAB>regional" for every register in the
+# database, using whichever of those columns actually exist. Fails when there is
+# no usable database, so callers fall back to bare hostnames.
+_reg_meta() {
+    [[ -f $_REG_DB ]] || return 1
+    command -v sqlite3 >/dev/null 2>&1 || return 1
+
+    local schema tbl hostc sschema stbl skey
+    schema=$(_reg_db_schema) || return 1
+    tbl=${schema%%$'\t'*}
+    hostc=${${schema#*$'\t'}%%$'\t'*}
+    sschema=$(_reg_db_store) || return 1
+    stbl=${sschema%%$'\t'*}
+    skey=${sschema##*$'\t'}
+
+    # Display columns, in order, skipping any this schema does not have.
+    local c
+    local -a want=(store_number store_city store_state store_regional) cols=()
+    for c in $want; do
+        _reg_db_has_col "$stbl" "$c" && cols+=("s.\"$c\"")
+    done
+    (( ${#cols} )) || return 1
+
+    local join
+    if _reg_db_has_col "$tbl" "$skey"; then
+        join="s.\"$skey\" = r.\"$skey\""
+    else
+        join="s.\"$skey\" = substr(r.\"$hostc\", 1, 4)"
+    fi
+
+    sqlite3 -readonly -separator $'\t' "$_REG_DB" \
+        "SELECT r.\"$hostc\", ${(j:, :)cols} FROM \"$tbl\" r
+         LEFT JOIN \"$stbl\" s ON $join;" 2>/dev/null
+}
+
+# The picker's rows: hostnames from the ssh config (still the inventory),
+# decorated with store/city/state/regional from the database when it has them,
+# aligned into columns. Field 1 is always the hostname — what fzf's {1} and the
+# callers take. REG_PICK_PLAIN=1 forces bare hostnames.
+_reg_rows() {
+    local hosts
+    hosts=$(_reg_hosts) || return 1
+
+    local meta
+    if [[ ${REG_PICK_PLAIN:-0} == 1 ]] || ! meta=$(_reg_meta) || [[ -z $meta ]]; then
+        print -r -- "$hosts"
+        return 0
+    fi
+
+    # Left join onto the ssh config, preserving its order and its host set: a
+    # register missing from the database still gets a row, just a bare one.
+    local joined
+    joined=$(awk -F'\t' -v OFS='\t' '
+        NR == FNR { key = $1; sub(/^[^\t]*\t/, ""); m[key] = $0; next }
+        { print ($1 in m) ? $1 OFS m[$1] : $1 }' =(print -r -- "$meta") =(print -r -- "$hosts"))
+
+    if command -v column >/dev/null 2>&1; then
+        print -r -- "$joined" | column -t -s $'\t'
+    else
+        print -r -- "$joined"
+    fi
+}
+
 # Sets `reply` to the fzf preview flags, or leaves it empty when there is no
 # database, no sqlite3, or no table that looks like an inventory. A missing
 # table is a configuration fact, not a per-keystroke error, so it produces no
@@ -182,7 +245,7 @@ _reg_preview_args() {
     fi
 
     reply=(
-        --preview "h={}; case \$h in \
+        --preview "h={1}; case \$h in \
                      *[!A-Za-z0-9_.-]*) printf ' %s\\n (no preview)\\n' \"\$h\";; \
                      *) r=\$($regq); \
                         if [ -n \"\$r\" ]; then printf '%s\\n' \"\$r\" | $fmt_reg; \
@@ -198,10 +261,10 @@ _reg_preview_args() {
 _reg_pick() {
     local prompt="$1" query="${2-}" all
     local -a reply
-    all=$(_reg_hosts) || return
+    all=$(_reg_rows) || return
     _reg_preview_args
     print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% \
-        --query="$query" "${reply[@]}"
+        --query="$query" "${reply[@]}" | awk '{print $1}'
 }
 
 # _reg_pick_expect <prompt> <expect-keys> <header> [query] — prints the pressed
@@ -210,20 +273,21 @@ _reg_pick() {
 _reg_pick_expect() {
     local prompt="$1" keys="$2" header="$3" query="${4-}" all
     local -a reply
-    all=$(_reg_hosts) || return
+    all=$(_reg_rows) || return
     _reg_preview_args
     print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% --multi \
-        --query="$query" --header="$header" --expect="$keys" "${reply[@]}"
+        --query="$query" --header="$header" --expect="$keys" "${reply[@]}" \
+        | awk 'NR == 1 { print; next } { print $1 }'
 }
 
 # _reg_pick_multi <prompt> [query] — same, with Tab to multi-select
 _reg_pick_multi() {
     local prompt="$1" query="${2-}" all
     local -a reply
-    all=$(_reg_hosts) || return
+    all=$(_reg_rows) || return
     _reg_preview_args
     print -r -- "$all" | fzf --prompt="${prompt} ❯ " --reverse --height=60% --multi \
-        --query="$query" "${reply[@]}"
+        --query="$query" "${reply[@]}" | awk '{print $1}'
 }
 
 # _reg_tmux_panes <session> <ssh-target>... — one tiled pane per target,

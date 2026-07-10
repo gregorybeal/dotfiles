@@ -124,8 +124,7 @@ cask "cyberduck"
 # Remote / RDP / VNC
 cask "windows-app" # Microsoft Remote Desktop, for RDP access to Windows machines 
 cask "royal-tsx"
-brew "tiger-vnc"             # vncviewer CLI; takes VNC_PASSWORD from env (fvnc uses it)
-cask "vnc-viewer"            # RealVNC GUI, kept for ad-hoc use
+cask "vnc-viewer"            # RealVNC GUI, ad-hoc use (fvnc uses Screen Sharing)
 cask "core-tunnel"
 
 # Media

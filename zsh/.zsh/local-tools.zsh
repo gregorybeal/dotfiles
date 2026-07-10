@@ -701,7 +701,10 @@ _reg_ip() {
 }
 
 # frtsx [query] — pick a register by hostname and hand it to Royal TSX as an ad
-# hoc connection. Enter opens VNC, Ctrl-S opens SSH.
+# hoc connection. Enter opens VNC, Ctrl-S opens SSH, Ctrl-F opens SFTP.
+#
+# sftp:// is not in Royal Apps' published list of protocol identifiers, but it
+# works — verified against a real Royal TSX.
 #
 # Royal TSX gets the IP, not the hostname: register names only resolve through
 # the generated ssh config, which Royal TSX does not read. You still search by
@@ -716,13 +719,18 @@ frtsx() {
     [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
 
     local out key proto host ip rc=0
-    out=$(_reg_pick_expect rtsx ctrl-s 'enter=vnc   ctrl-s=ssh   tab=multi-select' "$1") || return
+    out=$(_reg_pick_expect rtsx ctrl-s,ctrl-f \
+        'enter=vnc   ctrl-s=ssh   ctrl-f=sftp   tab=multi-select' "$1") || return
     local -a lines; lines=("${(@f)out}")
     key=${lines[1]}
     local -a hosts=("${lines[@]:1}")   # line 1 is the key; the rest are hosts
     (( ${#hosts} )) || return
 
-    [[ $key == ctrl-s ]] && proto=ssh || proto=vnc
+    case $key in
+        ctrl-s) proto=ssh  ;;
+        ctrl-f) proto=sftp ;;
+        *)      proto=vnc  ;;   # Enter
+    esac
     for host in $hosts; do
         if ip=$(_reg_ip "$host"); then
             print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${ip})%f"

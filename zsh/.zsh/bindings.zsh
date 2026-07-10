@@ -1,31 +1,28 @@
 # =========================================================
-# Vi-mode appearance
+# Keymap
 # =========================================================
 
-ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BEAM
-ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+# Emacs keymap, explicitly. Without this zsh picks the keymap from $VISUAL /
+# $EDITOR, and "nvim" matches *vi* — so an unset keymap silently lands you in
+# vi mode even with no vi-mode plugin installed.
+bindkey -e
 
-ZVM_VI_HIGHLIGHT_BACKGROUND=none
-ZVM_VI_HIGHLIGHT_FOREGROUND=none
-ZVM_VI_HIGHLIGHT_EXTRASTYLE=none
+# =========================================================
+# Key bindings
+# =========================================================
+# bindkey accepts a widget that does not exist yet; the name resolves when the
+# key is pressed. So these can sit here even though autosuggestions and
+# history-substring-search are loaded later, in plugins.zsh.
 
-# zsh-vi-mode resets bindings on init — custom bindings must be
-# registered via this hook to survive.
-zvm_after_init() {
-  bindkey '^[[1;5C' forward-word            # Ctrl-Right
-  bindkey '^[[1;5D' backward-word           # Ctrl-Left
-  bindkey '^F' _fzf_file_no_hidden          # Ctrl-F: fzf, no hidden files
-  bindkey '^\' autosuggest-toggle           # Ctrl-\: toggle autosuggestions
-  bindkey '^[[B' history-substring-search-down
+bindkey '^[[1;5C' forward-word            # Ctrl-Right
+bindkey '^[[1;5D' backward-word           # Ctrl-Left
+bindkey '^F' _fzf_file_no_hidden          # Ctrl-F: fzf, no hidden files
+bindkey '^\' autosuggest-toggle           # Ctrl-\: toggle autosuggestions
+bindkey '^[[B' history-substring-search-down
 
-  # atuin's Ctrl-R binding also gets wiped by the reset above — re-run
-  # its init here (not in local-tools.zsh, which runs too early) so it
-  # survives. Re-running is safe/idempotent. Also owns Up (no
-  # --disable-up-arrow) — Down stays on history-substring-search above,
-  # since atuin's init doesn't bind it.
-  command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
-}
+# atuin owns Ctrl-R and Up (no --disable-up-arrow); Down stays on
+# history-substring-search above, since atuin's init does not bind it.
+command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 
 # =========================================================
 # ssh-agent (persistent across sessions)

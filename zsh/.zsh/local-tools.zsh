@@ -898,12 +898,8 @@ fzf-rtsx-widget() {
     zle reset-prompt
 }
 zle -N fzf-rtsx-widget
-# zsh-vi-mode restores ^P to up-line-or-history when it initialises, so binding
-# it here is not enough — register through zvm's hook so it survives. (^O and ^G
-# are left alone by zvm, which is why they bind directly.) The plain bindkey is
-# the no-zvm fallback.
+# ^P was zsh's default up-line-or-history; atuin owns the Up arrow.
 bindkey '^P' fzf-rtsx-widget
-zvm_after_init_commands+=('bindkey "^P" fzf-rtsx-widget')
 
 # ---------- yazi directory jump ----------
 function y() {

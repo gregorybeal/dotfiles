@@ -408,9 +408,13 @@ fmounts() {
 _REG_VNC_PORT="${REG_VNC_PORT:-5900}"    # VNC port on the register
 _REG_VNC_BASE="${REG_VNC_BASE:-5901}"    # first local port to try
 _REG_VNC_GRACE="${REG_VNC_GRACE:-20}"    # seconds for the viewer to connect
-# A RealVNC connection file exported once from the GUI, with the password saved
-# and Scaling set. fvnc rewrites only its host/port per tunnel.
+# A RealVNC connection file exported once from the GUI, with the password saved.
+# fvnc rewrites its host/port per tunnel and forces Scaling.
 _REG_VNC_TEMPLATE="${REG_VNC_TEMPLATE:-$HOME/.config/fvnc/register.vnc}"
+# Client-side scale: the viewer resizes what it draws, the register's own
+# display is untouched. RealVNC's exports omit this key entirely, so set it.
+# AspectFit keeps the aspect ratio; Fit stretches; None gives scrollbars.
+_REG_VNC_SCALING="${REG_VNC_SCALING:-AspectFit}"
 
 # Test bindability rather than inspecting the listener table: zsh/net/tcp is
 # a builtin module, so this behaves identically on macOS and Linux and needs
@@ -498,21 +502,46 @@ _reg_realvnc_bin() {
 # print the temp file's path. The format is not assumed: whichever host (and
 # optional port) key the exported file actually uses is rewritten in place, so
 # the saved password, Scaling and everything else carry over untouched.
+# Pure zsh on purpose: `grep` is aliased to `rg` in this shell, and zsh expands
+# aliases when a function is *defined*, so a bare grep here silently became rg.
+# No external text tools, no alias can reach it.
 _reg_realvnc_config() {
     local lport="$1" tmpl="$_REG_VNC_TEMPLATE" out
     [[ -f $tmpl ]] || return 1
 
+    local -a lines
+    lines=("${(@f)$(<"$tmpl")}")
+
+    # Some exports glue the port onto Host=, others keep a separate Port= line.
+    local l key has_port=0
+    for l in $lines; do
+        key=${${${l%%=*}//[[:space:]]/}:l}
+        [[ $key == port ]] && has_port=1
+    done
+
     out=$(mktemp "${TMPDIR:-/tmp}/fvnc-XXXXXX") || return 1
     chmod 600 "$out"
 
-    if grep -qiE '^[[:space:]]*port[[:space:]]*=' "$tmpl"; then
-        sed -E -e "s|^([[:space:]]*[Hh][Oo][Ss][Tt][[:space:]]*=).*|\1127.0.0.1|" \
-               -e "s|^([[:space:]]*[Pp][Oo][Rr][Tt][[:space:]]*=).*|\1${lport}|" "$tmpl" >"$out"
-    else
-        sed -E -e "s|^([[:space:]]*[Hh][Oo][Ss][Tt][[:space:]]*=).*|\1127.0.0.1:${lport}|" "$tmpl" >"$out"
-    fi
+    local seen_host=0 seen_scaling=0
+    {
+        # Quoted expansion: unquoted `$lines` would silently drop blank lines.
+        for l in "${lines[@]}"; do
+            key=${${${l%%=*}//[[:space:]]/}:l}
+            case $key in
+                host)
+                    seen_host=1
+                    if (( has_port )); then print -r -- "Host=127.0.0.1"
+                    else print -r -- "Host=127.0.0.1:${lport}"; fi ;;
+                port)    print -r -- "Port=${lport}" ;;
+                scaling) seen_scaling=1; print -r -- "Scaling=${_REG_VNC_SCALING}" ;;
+                *)       print -r -- "$l" ;;
+            esac
+        done
+        # RealVNC's export omits Scaling when it is at the default, so add it.
+        (( seen_scaling )) || print -r -- "Scaling=${_REG_VNC_SCALING}"
+    } >"$out"
 
-    if ! grep -qiE '^[[:space:]]*host[[:space:]]*=' "$out"; then
+    if (( ! seen_host )); then
         print -u2 "fvnc: no Host= line in $tmpl — is that a RealVNC connection file?"
         rm -f "$out"
         return 1

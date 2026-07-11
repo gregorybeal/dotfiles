@@ -851,6 +851,31 @@ _reg_rtsx_target() {
     _reg_ip "$host"
 }
 
+# osascript stderr routing. The Royal TSX osascript calls normally swallow their
+# stderr, so a failure — a `whose` filter Royal TSX rejects, a denied automation
+# (TCC) prompt — is invisible and the handoff just quietly degrades to ad hoc.
+# That is exactly how the "ad hoc even when the object exists" regression hid.
+# Set REG_RTSX_DEBUG=1 to surface it: osascript's stderr goes to a temp file that
+# is then dumped to *this* process's stderr (Alfred captures that in its workflow
+# debugger; an interactive shell shows it inline). Unset, stderr goes to
+# /dev/null as before, adding no temp file and no cost.
+#
+# _reg_osa_errfile prints the path to redirect osascript's stderr to;
+# _reg_osa_debug dumps that file to stderr and removes it. A /dev/null path is
+# the "debug off" sentinel and is left alone.
+_reg_osa_errfile() {
+    if [[ -n $REG_RTSX_DEBUG ]]; then
+        mktemp "${TMPDIR:-/tmp}/rtsx-osa.XXXXXX" 2>/dev/null && return
+    fi
+    print -r -- /dev/null
+}
+_reg_osa_debug() {
+    local errf="$1"
+    [[ $errf == /dev/null ]] && return
+    [[ -s $errf ]] && print -u2 -P "%F{yellow}[rtsx osascript]%f $(<$errf)"
+    rm -f "$errf"
+}
+
 # Hand a connection string to Royal TSX.
 #
 # `adhoc` is a documented AppleScript command taking the same string the URL
@@ -862,12 +887,14 @@ _reg_rtsx_target() {
 #
 # The catch is macOS automation permission (TCC): the first call prompts, and a
 # denied prompt makes osascript fail. `open` needs no permission, so it stays as
-# the fallback.
+# the fallback. Set REG_RTSX_DEBUG=1 to see why a denied prompt failed.
 _reg_rtsx_adhoc() {
     local conn="$1"
     if command -v osascript >/dev/null 2>&1; then
+        local errf; errf=$(_reg_osa_errfile)
         printf 'tell application "Royal TSX" to adhoc "%s"\n' "$conn" \
-            | osascript - >/dev/null 2>&1 && return 0
+            | osascript - >/dev/null 2>"$errf" && { _reg_osa_debug "$errf"; return 0 }
+        _reg_osa_debug "$errf"
         print -u2 "frtsx: osascript adhoc failed (automation permission?); using open"
     fi
     open "rtsx://${conn}"
@@ -914,7 +941,7 @@ _reg_rtsx_connect() {
         # one hostname is a prefix of another. The name is passed as an argv
         # value, not spliced into the script, so it needs no escaping.
         # "notfound" (or an empty result on any error) falls through to ad hoc.
-        local res
+        local res errf; errf=$(_reg_osa_errfile)
         res=$(osascript \
             -e 'on run argv' \
             -e 'set theName to item 1 of argv' \
@@ -930,7 +957,10 @@ _reg_rtsx_connect() {
             -e 'return "notfound"' \
             -e 'end tell' \
             -e 'end run' \
-            -- "$name" 2>/dev/null)
+            -- "$name" 2>"$errf")
+        _reg_osa_debug "$errf"
+        [[ -n $REG_RTSX_DEBUG ]] && \
+            print -u2 -P "%F{242}[rtsx] connect \"${name}\" -> ${res:-<none>}%f"
         [[ $res == ok ]] && return 0
         print -u2 -P "%F{242}frtsx: no stored object \"${name}\"; connecting ad hoc%f"
     fi

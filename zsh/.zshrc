@@ -76,6 +76,7 @@ fi
 source "$HOME/.zsh/fzf.zsh"
 [ -f "$HOME/.aliases.sh" ] && source "$HOME/.aliases.sh"
 source "$HOME/.zsh/bindings.zsh"
+source "$HOME/.zsh/ssh-agent.zsh"
 source "$HOME/.zsh/plugins.zsh"
 
 # ---------- Prompt ----------

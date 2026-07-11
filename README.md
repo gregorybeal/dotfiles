@@ -52,6 +52,8 @@ Adding a new package: create a directory named after the tool, lay out files ins
 ```
 dotfiles/
 ├── zsh/                        → ~/.zshenv, ~/.zshrc, ~/.zsh/
+│                                  .zsh/ is modular: plugins/bindings/fzf/ssh-agent, plus the
+│                                  register tools (reg-*.zsh) loaded via local-tools.zsh
 ├── bash/                       → ~/.bashrc
 ├── aliases/                    → ~/.aliases.sh          (shared bash + zsh)
 ├── git/                        → ~/.gitconfig            (identity lives in ~/.gitconfig.local, not here)

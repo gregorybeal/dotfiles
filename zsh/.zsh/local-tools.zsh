@@ -1019,6 +1019,49 @@ frtsx() {
     return $rc
 }
 
+# frtsx-store [store] — open *every* register at a store in Royal TSX, one
+# connection each. The Royal TSX analogue of fstore (which tiles SSH panes in
+# tmux). With no argument, fuzzy-pick the store the same way fstore does; the
+# same keys as frtsx choose the protocol: Enter=VNC, Ctrl-S=SSH, Ctrl-F=SFTP.
+# Passing a store number connects it as VNC — set REG_RTSX_STORE_PROTO to change
+# that default. Uses the same stored-object handoff as frtsx (_reg_rtsx_connect).
+frtsx-store() {
+    [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx-store: Royal TSX is macOS-only"; return 1 }
+
+    local store="$1" proto="${REG_RTSX_STORE_PROTO:-vnc}" all
+    all=$(_reg_hosts) || return
+    if [[ -z $store ]]; then
+        local out
+        out=$(print -r -- "$all" | sed -E 's/reg[0-9]+$//' | sort -u \
+                | fzf --prompt='rtsx store ❯ ' --reverse --height=40% \
+                      --header='enter=vnc   ctrl-s=ssh   ctrl-f=sftp' \
+                      --expect=ctrl-s,ctrl-f) || return
+        local -a lines; lines=("${(@f)out}")
+        store=${lines[2]}                        # line 1 is the pressed key
+        case ${lines[1]} in
+            ctrl-s) proto=ssh  ;;
+            ctrl-f) proto=sftp ;;
+        esac
+    fi
+    [[ -z $store ]] && return
+    [[ $store == <-> ]] && store=$(printf '%04d' "$((10#$store))")
+
+    local -a hosts
+    hosts=(${(f)"$(awk -v s="$store" \
+        '$1=="Host" && $2 ~ ("^" s "reg[0-9][0-9]$") {print $2}' "$_REG_CONF")"})
+    if (( ${#hosts} == 0 )); then
+        print -u2 "frtsx-store: no registers found for store $store"
+        return 1
+    fi
+
+    local host rc=0
+    for host in $hosts; do
+        print -P "%F{green}rtsx%f ${proto} → ${host}"
+        _reg_rtsx_connect "$proto" "$host" || rc=1
+    done
+    return $rc
+}
+
 # Ctrl-P — open the Royal TSX picker straight from the prompt.
 # Unlike Ctrl-O (which fills the buffer with `ssh <host>` so it lands in
 # history), frtsx hands off to another application: there is no command worth

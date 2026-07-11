@@ -907,20 +907,30 @@ _reg_rtsx_connect() {
     local name; name=$(_reg_rtsx_name "$host" "$proto")
 
     if command -v osascript >/dev/null 2>&1; then
-        # Exact-match the object by name, then connect its id. `whose name is`
-        # keeps this off `connect`'s own (fuzzy) name matching, and the id keeps
-        # it unambiguous when a hostname is a prefix of another. "notfound" lets
-        # us fall through to ad hoc rather than surfacing an error.
-        local nm=${name//\\/\\\\}; nm=${nm//\"/\\\"}
+        # Enumerate every connection and exact-match the name in AppleScript,
+        # then connect its id. Royal TSX does not support a `whose name is …`
+        # filter on connections (its own Alfred workflow enumerates and loops
+        # for exactly this reason), and the id keeps the match unambiguous when
+        # one hostname is a prefix of another. The name is passed as an argv
+        # value, not spliced into the script, so it needs no escaping.
+        # "notfound" (or an empty result on any error) falls through to ad hoc.
         local res
         res=$(osascript \
+            -e 'on run argv' \
+            -e 'set theName to item 1 of argv' \
             -e 'tell application "Royal TSX"' \
-            -e "set hits to (every connection whose name is \"$nm\")" \
-            -e 'if (count of hits) is 0 then return "notfound"' \
+            -e 'set {conIds, conNames} to {id, name} of every connection' \
+            -e 'repeat with i from 1 to count of conNames' \
+            -e 'if (item i of conNames) is theName then' \
             -e 'activate' \
-            -e 'connect (id of item 1 of hits)' \
+            -e 'connect (item i of conIds)' \
             -e 'return "ok"' \
-            -e 'end tell' 2>/dev/null)
+            -e 'end if' \
+            -e 'end repeat' \
+            -e 'return "notfound"' \
+            -e 'end tell' \
+            -e 'end run' \
+            -- "$name" 2>/dev/null)
         [[ $res == ok ]] && return 0
         print -u2 -P "%F{242}frtsx: no stored object \"${name}\"; connecting ad hoc%f"
     fi

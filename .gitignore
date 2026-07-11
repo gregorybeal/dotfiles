@@ -6,3 +6,5 @@ ssh/registers
 # Stray binaries — the repo manages configs, not installed tools.
 # (a 43MB chezmoi binary got committed here by accident once)
 .local/
+__pycache__/
+*.pyc

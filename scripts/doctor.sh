@@ -314,6 +314,37 @@ else
     info "sshfs not installed — fmount unavailable"
 fi
 
+# The Royal TSX object-name contract: _reg_rtsx_name (zsh, the picker side)
+# and object_name in reg-royaljson.py (the generator side) MUST produce the
+# same names, or `connect` never finds the stored objects and every handoff
+# silently degrades to ad hoc. Comments say "keep these in sync"; this
+# actually runs both and compares.
+if command -v zsh >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1 \
+   && [ -f "$DOTFILES/mac/royaltsx/reg-royaljson.py" ]; then
+    ZNAMES=$(zsh -c "source '$DOTFILES/zsh/.zsh/local-tools.zsh' 2>/dev/null
+        for p in vnc ssh sftp; do _reg_rtsx_name 0000reg00 \$p; done" 2>/dev/null)
+    PNAMES=$(python3 - "$DOTFILES" 2>/dev/null <<'PYEOF'
+import importlib.util, sys
+sys.dont_write_bytecode = True     # no __pycache__ litter in the repo
+root = sys.argv[1]
+sys.path.insert(0, root + "/mac")  # reg-royaljson may import reglib
+spec = importlib.util.spec_from_file_location(
+    "rj", root + "/mac/royaltsx/reg-royaljson.py")
+rj = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(rj)
+for p in ("vnc", "ssh", "sftp"):
+    print(rj.object_name("0000reg00", p))
+PYEOF
+)
+    if [ -n "$ZNAMES" ] && [ "$ZNAMES" = "$PNAMES" ]; then
+        ok "Royal TSX object-name contract agrees (zsh ↔ reg-royaljson.py)"
+    else
+        fail "Royal TSX object-name contract MISMATCH — frtsx/Alfred will silently fall back to ad hoc"
+        fail "  zsh side:    $(echo $ZNAMES | tr '\n' ' ')"
+        fail "  python side: $(echo $PNAMES | tr '\n' ' ')"
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────
 if command -v jira >/dev/null 2>&1; then
 section "jira-cli"

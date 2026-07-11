@@ -1,87 +1,35 @@
 #!/usr/bin/env python3
 """Format registers as Alfred Script Filter JSON.
 
-Reads the ssh-config host list (the inventory) on stdin, one per line, and a
-metadata TSV — host<TAB>ip<TAB>store<TAB>city<TAB>state<TAB>regional — from the
-file named in argv[1]. Knows nothing about the database schema; the caller has
-already resolved it. Does the join, the display target and the JSON escaping.
-
+Reads the inventory + metadata inputs described in reglib (stdin + argv[1]).
 Each item's arg is "<proto> <host>" (a plain space so Alfred's "input as argv"
 splits it into $1=proto $2=host). reg-connect.zsh turns that into a connection:
 it opens the stored Royal TSX object for that host+proto, falling back to ad
 hoc. The register hostname is the object-name key, so this file passes the bare
 host, not a resolved target — reg-connect owns hostname/IP resolution (shared
 with frtsx via _reg_rtsx_connect). The resolved target is still shown in the
-subtitle/copy text below, mirroring _reg_rtsx_target:
-  REG_RTSX_TARGET=hostname|ip forces one; REG_HOSTS_FILE overrides /etc/hosts.
+subtitle/copy text, via reglib's REG_RTSX_TARGET/REG_HOSTS_FILE handling.
 """
 import json
-import os
 import sys
+from pathlib import Path
 
-
-def load_meta(path):
-    meta = {}
-    try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                f = line.rstrip("\n").split("\t")
-                f += [""] * (6 - len(f))
-                host, ip, store, city, state, regional = f[:6]
-                if host:
-                    meta[host] = dict(ip=ip, store=store, city=city,
-                                      state=state, regional=regional)
-    except OSError:
-        pass
-    return meta
-
-
-def hosts_in(path):
-    """Alias names present in a hosts file (never the address in column 1)."""
-    names = set()
-    try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                line = line.split("#", 1)[0].split()
-                names.update(line[1:])
-    except OSError:
-        pass
-    return names
-
-
-def subtitle(m):
-    bits = []
-    if m.get("store"):
-        bits.append("store {}".format(m["store"]))
-    loc = ", ".join(x for x in (m.get("city"), m.get("state")) if x)
-    if loc:
-        bits.append(loc)
-    if m.get("regional"):
-        bits.append(m["regional"])
-    return " · ".join(bits)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import reglib
 
 
 def main():
-    meta = load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
-    inventory = [h.strip() for h in sys.stdin if h.strip()]
-
-    mode = os.environ.get("REG_RTSX_TARGET", "").lower()
-    hosts_file = os.environ.get("REG_HOSTS_FILE", "/etc/hosts")
-    resolvable = hosts_in(hosts_file) if mode not in ("hostname", "ip") else set()
+    meta = reglib.load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
+    inventory = reglib.read_inventory(sys.stdin)
+    target_of = reglib.make_target_of()
 
     items = []
     for host in inventory:
         m = meta.get(host, {})
         ip = m.get("ip", "")
+        target = target_of(host, ip)
 
-        if mode == "hostname":
-            target = host
-        elif mode == "ip":
-            target = ip or host
-        else:
-            target = host if host in resolvable else (ip or host)
-
-        sub = subtitle(m)
+        sub = reglib.subtitle(m)
         match = " ".join(x for x in (
             host, m.get("store"), m.get("city"), m.get("state"),
             m.get("regional"), ip) if x)

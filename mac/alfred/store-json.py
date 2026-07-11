@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Format stores (not individual registers) as Alfred Script Filter JSON.
 
-Same inputs as reg-json.py — the ssh-config host list on stdin and the metadata
-TSV (host<TAB>ip<TAB>store<TAB>city<TAB>state<TAB>regional) in argv[1] — but it
+Reads the inventory + metadata inputs described in reglib (stdin + argv[1]),
 groups the registers by store and emits one item per store. Picking a store
 opens every register at it in Royal TSX (store-connect.zsh → _reg_rtsx_store).
 
@@ -12,30 +11,17 @@ regNN suffix stripped (e.g. 0003), which is what the awk in _reg_rtsx_store
 matches. cmd/alt swap the protocol, mirroring the per-register filter.
 """
 import json
-import os
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import reglib
 
 STRIP_REG = re.compile(r"reg\d+$")
 
 
-def load_meta(path):
-    meta = {}
-    try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                f = line.rstrip("\n").split("\t")
-                f += [""] * (6 - len(f))
-                host, ip, store, city, state, regional = f[:6]
-                if host:
-                    meta[host] = dict(store=store, city=city, state=state,
-                                      regional=regional)
-    except OSError:
-        pass
-    return meta
-
-
-def subtitle(count, m):
+def store_subtitle(count, m):
     bits = ["{} register{}".format(count, "" if count == 1 else "s")]
     loc = ", ".join(x for x in (m.get("city"), m.get("state")) if x)
     if loc:
@@ -46,8 +32,8 @@ def subtitle(count, m):
 
 
 def main():
-    meta = load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
-    inventory = [h.strip() for h in sys.stdin if h.strip()]
+    meta = reglib.load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
+    inventory = reglib.read_inventory(sys.stdin)
 
     # Group registers by store (hostname prefix), preserving first-seen order.
     order = []
@@ -67,7 +53,7 @@ def main():
         s = stores[key]
         m = s["meta"]
         num = m.get("store") or key.lstrip("0") or key
-        sub = subtitle(s["count"], m)
+        sub = store_subtitle(s["count"], m)
         match = " ".join(x for x in (
             key, num, m.get("city"), m.get("state"), m.get("regional")) if x)
         arg = lambda proto: "{} {}".format(proto, key)

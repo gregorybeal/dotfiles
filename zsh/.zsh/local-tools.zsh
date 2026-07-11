@@ -934,33 +934,44 @@ _reg_rtsx_connect() {
     local name; name=$(_reg_rtsx_name "$host" "$proto")
 
     if command -v osascript >/dev/null 2>&1; then
-        # Enumerate every connection and exact-match the name in AppleScript,
-        # then connect its id. Royal TSX does not support a `whose name is …`
-        # filter on connections (its own Alfred workflow enumerates and loops
-        # for exactly this reason), and the id keeps the match unambiguous when
-        # one hostname is a prefix of another. The name is passed as an argv
-        # value, not spliced into the script, so it needs no escaping.
-        # "notfound" (or an empty result on any error) falls through to ad hoc.
-        local res errf; errf=$(_reg_osa_errfile)
+        # Resolve the object id and connect it. The fast path is `get object id
+        # with name` — a single round trip that makes Royal TSX do the lookup
+        # internally, instead of marshalling id+name of *every* connection (many
+        # thousands, with a per-store × per-protocol tree) across the Apple Event
+        # bridge on each call. Only if that finds nothing do we fall back to
+        # enumerating and exact-matching (Royal TSX has no `whose name is …`
+        # filter on connections, so a loop is the fallback), then to ad hoc.
+        # The name is passed as an argv value, not spliced in, so it needs no
+        # escaping. "notfound" (or an empty result on any error) → ad hoc.
+        local res errf t0; errf=$(_reg_osa_errfile)
+        [[ -n $REG_RTSX_DEBUG ]] && zmodload zsh/datetime 2>/dev/null && t0=$EPOCHREALTIME
         res=$(osascript \
             -e 'on run argv' \
             -e 'set theName to item 1 of argv' \
             -e 'tell application "Royal TSX"' \
+            -e 'set theId to ""' \
+            -e 'try' \
+            -e 'set theId to (get object id with name theName as text)' \
+            -e 'end try' \
+            -e 'if theId is "" then' \
             -e 'set {conIds, conNames} to {id, name} of every connection' \
             -e 'repeat with i from 1 to count of conNames' \
-            -e 'if (item i of conNames) is theName then' \
-            -e 'activate' \
-            -e 'connect (item i of conIds)' \
-            -e 'return "ok"' \
-            -e 'end if' \
+            -e 'if (item i of conNames) is theName then set theId to (item i of conIds)' \
             -e 'end repeat' \
-            -e 'return "notfound"' \
+            -e 'end if' \
+            -e 'if theId is "" then return "notfound"' \
+            -e 'activate' \
+            -e 'connect theId' \
+            -e 'return "ok"' \
             -e 'end tell' \
             -e 'end run' \
             -- "$name" 2>"$errf")
         _reg_osa_debug "$errf"
-        [[ -n $REG_RTSX_DEBUG ]] && \
-            print -u2 -P "%F{242}[rtsx] connect \"${name}\" -> ${res:-<none>}%f"
+        if [[ -n $REG_RTSX_DEBUG ]]; then
+            local took=""
+            [[ -n $t0 ]] && took=$(printf ' %.2fs' $(( EPOCHREALTIME - t0 )))
+            print -u2 -P "%F{242}[rtsx] connect \"${name}\" -> ${res:-<none>}${took}%f"
+        fi
         [[ $res == ok ]] && return 0
         print -u2 -P "%F{242}frtsx: no stored object \"${name}\"; connecting ad hoc%f"
     fi

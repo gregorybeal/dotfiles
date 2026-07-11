@@ -149,6 +149,45 @@ _reg_meta() {
          LEFT JOIN \"$stbl\" s ON $join;" 2>/dev/null
 }
 
+# Like _reg_meta, but one row per register with the IP included, for consumers
+# that build their own join/output rather than the aligned picker rows:
+#   host<TAB>ip<TAB>store<TAB>city<TAB>state<TAB>regional
+# Empty string for any column the schema lacks. Used by the Alfred script filter
+# (mac/alfred/reg-filter.zsh) and the RoyalJSON generator (mac/royaltsx/). Same
+# discovery primitives as _reg_meta; the IP lets the target be an address when
+# /etc/hosts is not set up.
+_reg_meta_full() {
+    [[ -f $_REG_DB ]] && command -v sqlite3 >/dev/null 2>&1 || return 1
+    local schema tbl hostc ipc
+    schema=$(_reg_db_schema) || return 1
+    tbl=${schema%%$'\t'*}
+    hostc=${${schema#*$'\t'}%%$'\t'*}
+    ipc=${schema##*$'\t'}
+
+    local -a sel=("r.\"$hostc\"")
+    sel+=("${ipc:+r.\"$ipc\"}"); [[ -n $ipc ]] || sel[-1]="''"
+
+    local c sschema stbl skey join=""
+    local -a scols=(store_number store_city store_state store_regional)
+    if sschema=$(_reg_db_store); then
+        stbl=${sschema%%$'\t'*}
+        skey=${sschema##*$'\t'}
+        for c in $scols; do
+            if _reg_db_has_col "$stbl" "$c"; then sel+=("s.\"$c\""); else sel+=("''"); fi
+        done
+        if _reg_db_has_col "$tbl" "$skey"; then
+            join="LEFT JOIN \"$stbl\" s ON s.\"$skey\" = r.\"$skey\""
+        else
+            join="LEFT JOIN \"$stbl\" s ON s.\"$skey\" = substr(r.\"$hostc\", 1, 4)"
+        fi
+    else
+        sel+=("''" "''" "''" "''")
+    fi
+
+    sqlite3 -readonly -separator $'\t' "$_REG_DB" \
+        "SELECT ${(j:, :)sel} FROM \"$tbl\" r $join;" 2>/dev/null
+}
+
 # The picker's rows: hostnames from the ssh config (still the inventory),
 # decorated with store/city/state/regional from the database when it has them,
 # aligned into columns. Field 1 is always the hostname — what fzf's {1} and the
@@ -834,31 +873,81 @@ _reg_rtsx_adhoc() {
     open "rtsx://${conn}"
 }
 
-# frtsx [query] — pick a register by hostname and hand it to Royal TSX as an ad
-# hoc connection. Enter opens VNC, Ctrl-S opens SSH, Ctrl-F opens SFTP.
+# The Royal TSX connection-object name for <host> at <proto>. This is the
+# contract between the picker (which connects by name) and the RoyalJSON
+# generator (mac/royaltsx/reg-royaljson.py, which creates the objects): they
+# MUST agree, or `connect` never finds the object and every handoff silently
+# degrades to ad hoc. VNC is the primary object and keeps the bare hostname, so
+# the tree reads cleanly; ssh/sftp are suffixed siblings.
+#   vnc  -> <host>
+#   ssh  -> <host> [SSH]
+#   sftp -> <host> [SFTP]
+_reg_rtsx_name() {
+    local host="$1"
+    case ${2:l} in
+        ssh)  print -r -- "${host} [SSH]"  ;;
+        sftp) print -r -- "${host} [SFTP]" ;;
+        *)    print -r -- "$host"          ;;
+    esac
+}
+
+# Connect <host> over <proto> by opening its *stored* Royal TSX object — the one
+# the RoyalJSON dynamic folder generated, which already carries the secure
+# gateway and credential inherited from its folder. That is the whole point of
+# the design-B setup: no ad hoc defaults, each register its own configured
+# connection.
 #
-# sftp:// is not in Royal Apps' published list of protocol identifiers, but it
-# works — verified against a real Royal TSX. Its `protocol` property shows why:
-# the valid values include FileTransfer.
+# Falls back to an ad hoc connection (the old behaviour) when no such object
+# exists, so a register that is in the ssh inventory but not yet materialised in
+# Royal TSX still connects. <target> is only the fallback's host (hostname or
+# IP); the stored object has its own ComputerName. It is resolved on demand, so
+# the common path (object present) never touches the database or /etc/hosts.
+_reg_rtsx_connect() {
+    local proto="$1" host="$2" target="${3-}"
+    local name; name=$(_reg_rtsx_name "$host" "$proto")
+
+    if command -v osascript >/dev/null 2>&1; then
+        # Exact-match the object by name, then connect its id. `whose name is`
+        # keeps this off `connect`'s own (fuzzy) name matching, and the id keeps
+        # it unambiguous when a hostname is a prefix of another. "notfound" lets
+        # us fall through to ad hoc rather than surfacing an error.
+        local nm=${name//\\/\\\\}; nm=${nm//\"/\\\"}
+        local res
+        res=$(osascript \
+            -e 'tell application "Royal TSX"' \
+            -e "set hits to (every connection whose name is \"$nm\")" \
+            -e 'if (count of hits) is 0 then return "notfound"' \
+            -e 'activate' \
+            -e 'connect (id of item 1 of hits)' \
+            -e 'return "ok"' \
+            -e 'end tell' 2>/dev/null)
+        [[ $res == ok ]] && return 0
+        print -u2 -P "%F{242}frtsx: no stored object \"${name}\"; connecting ad hoc%f"
+    fi
+
+    # Ad hoc fallback: uses Royal TSX's ad hoc defaults, not the stored object's
+    # gateway/credential, so per-store gateways don't apply here.
+    [[ -n $target ]] || target=$(_reg_rtsx_target "$host") || return 1
+    local cred=""
+    [[ -n $REG_RTSX_USER ]] && cred="${REG_RTSX_USER}?@"
+    _reg_rtsx_adhoc "${proto}://${cred}${target}"
+}
+
+# frtsx [query] — pick a register by hostname and open it in Royal TSX. Enter
+# opens VNC, Ctrl-S opens SSH, Ctrl-F opens SFTP (Tab multi-selects).
 #
-# Royal TSX does not read ~/.ssh/config, so a register name only works if
-# /etc/hosts maps it. With the hosts block installed you get the hostname in the
-# tab title; without it, frtsx falls back to the IP. You always search by
-# hostname either way.
+# Each protocol maps to a stored connection object created by the RoyalJSON
+# dynamic folder (mac/royaltsx/), so the connection's secure gateway and
+# credential come from its folder — not from ad hoc defaults. VNC is the primary
+# object; ssh/sftp are the "[SSH]"/"[SFTP]" siblings (see _reg_rtsx_name). A
+# register with no stored object falls back to an ad hoc connection.
 #
-# REG_RTSX_USER preselects a credential (user?@host). That form is unusable
-# through `open`, since ? starts a query string and Royal TSX ignores those on
-# macOS — it works only on the adhoc path.
-#
-# No tunnel and no credentials here: Royal TSX's ad hoc connection settings
-# already supply the secure gateway and the credential. The URI carries only
-# the protocol and the host, which is the form Royal Apps document
-# (rtsx://web://host). Escaping is only needed when the URI carries
-# user:pass@host:port, and query strings are ignored by Royal TSX on macOS.
+# sftp:// / FileTransfer works even though it is not in Royal Apps' published
+# protocol-identifier list — verified against a real Royal TSX.
 frtsx() {
     [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
 
-    local out key proto host ip rc=0
+    local out key proto host rc=0
     out=$(_reg_pick_expect rtsx ctrl-s,ctrl-f \
         'enter=vnc   ctrl-s=ssh   ctrl-f=sftp   tab=multi-select' "$1") || return
     local -a lines; lines=("${(@f)out}")
@@ -872,15 +961,9 @@ frtsx() {
         *)      proto=vnc  ;;   # Enter
     esac
 
-    local target cred=""
-    [[ -n $REG_RTSX_USER ]] && cred="${REG_RTSX_USER}?@"
     for host in $hosts; do
-        if target=$(_reg_rtsx_target "$host"); then
-            print -P "%F{green}rtsx%f ${proto} → ${host} %F{242}(${target})%f"
-            _reg_rtsx_adhoc "${proto}://${cred}${target}"
-        else
-            rc=1
-        fi
+        print -P "%F{green}rtsx%f ${proto} → ${host}"
+        _reg_rtsx_connect "$proto" "$host" || rc=1
     done
     return $rc
 }

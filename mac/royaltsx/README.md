@@ -58,6 +58,7 @@ Alfred alike):
 | `REG_HOSTS_FILE=/path` | Override `/etc/hosts` for that resolution check. |
 | `REG_RTSX_PROTOS=vnc,ssh,sftp` | Which objects to emit per register (default all three). Drop to `vnc` for a lighter tree. |
 | `REG_RTSX_GROUP=store\|flat` | Per-store folders (default) or one flat connection list. |
+| `REG_RTSX_DEBUG=1` | Surface the `connect`/`adhoc` osascript stderr and the match result (normally swallowed). Set this when a handoff unexpectedly opens ad hoc — it shows whether the object was found and any AppleScript/automation-permission error. |
 
 ## Fallback
 

@@ -16,8 +16,12 @@ alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
 
-# Updating
-alias update='brew upgrade && brew update && mas update'
+# Updating (brew/mas, so effectively Mac-only; update fetches metadata first,
+# then upgrade installs — the old order ran them backwards, and `mas update`
+# is not a mas subcommand)
+if command -v brew >/dev/null 2>&1; then
+    alias update='brew update && brew upgrade && mas upgrade'
+fi
 
 # Colors
 alias grep='grep --color=auto'
@@ -84,7 +88,8 @@ if command -v eza >/dev/null 2>&1; then
     alias tree='eza --tree --icons'
 fi
 if command -v fdfind >/dev/null 2>&1; then alias fd='fdfind'; fi
-if command -v rg >/dev/null 2>&1; then alias grep='rg --color=auto'; fi
+# No grep→rg alias: rg is not a drop-in (it recurses the cwd when given no
+# path, and its flag set differs). grep stays grep; use rg by name.
 
 # zsh-only: route ls's tab-completion through eza's own completion function
 if [ -n "$ZSH_VERSION" ] && command -v eza >/dev/null 2>&1; then
@@ -97,9 +102,11 @@ alias ports='netstat -tulanp 2>/dev/null || ss -tulnp'
 alias dfh='df -h'
 alias duh='du -h --max-depth=1 2>/dev/null | sort -h'
 
-# Mac Global Protect
-alias gpstart='launchctl load /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
-alias gpstop='launchctl unload /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
+# Mac Global Protect (launchctl + these LaunchAgents only exist on macOS)
+if [ "$(uname -s)" = "Darwin" ]; then
+    alias gpstart='launchctl load /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
+    alias gpstop='launchctl unload /Library/LaunchAgents/com.paloaltonetworks.gp.pangp*'
+fi
 
 # SSH Tunnels
 alias socks-up='tmux new -d -s sock1080 "ssh -N -D 127.0.0.1:1080 gbeal@lassssgate01.traderjoes.com" && tmux new -d -s sock1081 "ssh -N -D 127.0.0.1:1081 greg@100.118.20.30"'

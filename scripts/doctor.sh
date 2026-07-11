@@ -113,6 +113,13 @@ check_stow "$HOME/.config/starship.toml" "starship"
 check_stow "$HOME/.config/ghostty/config" "ghostty"
 check_stow "$HOME/.config/atuin/config.toml" "atuin"
 check_stow "$HOME/.config/btop/btop.conf" "btop"
+
+# A stray atuin/config.toml used to sit at the package root and stowed to
+# ~/config.toml; it was removed from the repo, which leaves that symlink
+# dangling on machines that had stowed it.
+if [ -L "$HOME/config.toml" ] && [ ! -e "$HOME/config.toml" ]; then
+    warn "~/config.toml is a dangling symlink (leftover of a removed atuin file) — rm it"
+fi
 check_stow "$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1" "powershell"
 
 if [ "$OS" = "Darwin" ]; then

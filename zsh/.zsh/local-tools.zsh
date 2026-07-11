@@ -1019,6 +1019,30 @@ frtsx() {
     return $rc
 }
 
+# _reg_rtsx_store <proto> <store> — connect every register at <store> over
+# <proto> through the stored-object handoff. The store number is zero-padded, so
+# 3 and 0003 are the same. Shared by frtsx-store and the Alfred store action, so
+# the shell and Alfred open a store identically.
+_reg_rtsx_store() {
+    local proto="$1" store="$2"
+    [[ $store == <-> ]] && store=$(printf '%04d' "$((10#$store))")
+
+    local -a hosts
+    hosts=(${(f)"$(awk -v s="$store" \
+        '$1=="Host" && $2 ~ ("^" s "reg[0-9][0-9]$") {print $2}' "$_REG_CONF")"})
+    if (( ${#hosts} == 0 )); then
+        print -u2 "frtsx-store: no registers found for store $store"
+        return 1
+    fi
+
+    local host rc=0
+    for host in $hosts; do
+        print -P "%F{green}rtsx%f ${proto} → ${host}"
+        _reg_rtsx_connect "$proto" "$host" || rc=1
+    done
+    return $rc
+}
+
 # frtsx-store [store] — open *every* register at a store in Royal TSX, one
 # connection each. The Royal TSX analogue of fstore (which tiles SSH panes in
 # tmux). With no argument, fuzzy-pick the store the same way fstore does; the
@@ -1044,22 +1068,8 @@ frtsx-store() {
         esac
     fi
     [[ -z $store ]] && return
-    [[ $store == <-> ]] && store=$(printf '%04d' "$((10#$store))")
 
-    local -a hosts
-    hosts=(${(f)"$(awk -v s="$store" \
-        '$1=="Host" && $2 ~ ("^" s "reg[0-9][0-9]$") {print $2}' "$_REG_CONF")"})
-    if (( ${#hosts} == 0 )); then
-        print -u2 "frtsx-store: no registers found for store $store"
-        return 1
-    fi
-
-    local host rc=0
-    for host in $hosts; do
-        print -P "%F{green}rtsx%f ${proto} → ${host}"
-        _reg_rtsx_connect "$proto" "$host" || rc=1
-    done
-    return $rc
+    _reg_rtsx_store "$proto" "$store"
 }
 
 # Ctrl-P — open the Royal TSX picker straight from the prompt.

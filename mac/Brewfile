@@ -100,7 +100,7 @@ cask "microsoft-365-copilot"  # AI assistant for M365 apps
 cask "1password"
 cask "1password-cli"        # for SSH agent + scripting
 cask "alfred"              # Spotlight replacement — highly recommended
-cask "Sanyam-G/switch/switch"              # better cmd-tab (per-window, not per-app)
+cask "alt-tab"              # better cmd-tab (per-window, not per-app)
 cask "the-unarchiver"       # opens .rar, .7z, etc.
 cask "appcleaner"           # uninstall apps properly
 cask "maccy"                # clipboard manager

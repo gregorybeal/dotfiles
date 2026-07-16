@@ -82,7 +82,7 @@ alias edit-ssh='${EDITOR:-vi} ~/.ssh/config'
 if command -v bat >/dev/null 2>&1; then alias cat='bat --paging=never'; fi
 if command -v batcat >/dev/null 2>&1; then alias cat='batcat --paging=never'; fi
 if command -v eza >/dev/null 2>&1; then
-    alias ls='eza --icons'
+    alias ls='eza -a --icons'
     alias ll='eza -lh --icons --git'
     alias la='eza -lah --icons --git'
     alias tree='eza --tree --icons'
@@ -113,5 +113,5 @@ alias socks-up='tmux new -d -s sock1080 "ssh -N -D 127.0.0.1:1080 gbeal@lassssga
 alias socks-down='tmux kill-session -t sock1080 2>/dev/null; tmux kill-session -t sock1081 2>/dev/null'
 
 # Tools
-alias hdm='uv run --directory /Users/gbeal/Tools/HDMenu Menu.py'
+alias hdm='uv run --directory /Users/gbeal/Tools/hdmenu Menu.py'
 alias cdid='uv run --project /Users/gbeal/Tools/Analysis /Users/gbeal/Tools/Analysis/loyalty_lookup.py'

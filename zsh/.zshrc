@@ -77,6 +77,7 @@ source "$HOME/.zsh/fzf.zsh"
 source "$HOME/.zsh/bindings.zsh"
 source "$HOME/.zsh/ssh-agent.zsh"
 source "$HOME/.zsh/plugins.zsh"
+source "$HOME/Git/JiraCLI/aliases.sh"
 
 # ---------- Prompt ----------
 export VIRTUAL_ENV_DISABLE_PROMPT=1

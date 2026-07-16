@@ -12,7 +12,7 @@
 # truly third-party formulae.
 
 # Aerospace tiling window manager (third-party)
-tap "Sanyam-G/switch"
+
 
 # ─────────────────────────────────────────────────────────────
 #  CLI tools
@@ -64,7 +64,7 @@ brew "ansible"              # if you ever run from Mac
 brew "sqlite"               # cli for the register inventory DB (fssh preview)
 brew "lazygit"
 brew "lazysql"
-brew "Adembc/homebrew-tap/lazyssh"
+#brew "Adembc/homebrew-tap/lazyssh"
 brew "yazi"
 
 # Mac App Store CLI (required for `mas` lines below)
@@ -124,7 +124,6 @@ cask "cyberduck"
 # Remote / RDP / VNC
 cask "windows-app" # Microsoft Remote Desktop, for RDP access to Windows machines 
 cask "royal-tsx"
-cask "vnc-viewer"            # RealVNC GUI, ad-hoc use (fvnc uses Screen Sharing)
 cask "core-tunnel"
 
 # Media

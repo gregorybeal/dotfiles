@@ -1,12 +1,15 @@
 #!/bin/zsh
 # reg-filter.zsh — Alfred Script Filter: list POS registers as Alfred items.
 #
-# Set the Script Filter's "input as" to {query} and leave "Alfred filters
-# results" UNCHECKED. Alfred then re-runs this script on every keystroke with
-# the live query as $1, and reg-json.py does the matching itself (plain
+# Two Alfred settings, both required (see mac/alfred/README.md for the full
+# why): leave "Alfred filters results" UNCHECKED, and once that unlocks the
+# "with input as" dropdown, set it to argv — NOT {query}. {query} mode does a
+# literal text substitution into the Script field itself and never touches $1;
+# argv is what actually puts Alfred's live query in $1, which this script (via
+# reg-json.py) needs on every keystroke to filter itself (plain
 # case-insensitive substring per whitespace-split term — see
-# reglib.query_matches). Do NOT check "Alfred filters results": Alfred's own
-# built-in live filter can fail on query text that crosses a digit-to-letter
+# reglib.query_matches). Do NOT check "Alfred filters results" either: Alfred's
+# own built-in live filter can fail on query text that crosses a digit-to-letter
 # boundary inside one word — e.g. typing the full hostname "0112reg99" can
 # return zero results even though "0112" alone matches everything — which is
 # exactly the bug this design avoids.

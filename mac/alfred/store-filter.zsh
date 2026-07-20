@@ -2,11 +2,12 @@
 # store-filter.zsh — Alfred Script Filter: list POS stores as Alfred items.
 #
 # The store-level companion to reg-filter.zsh: one item per store, picking one
-# opens every register at it in Royal TSX. Same wiring as reg-filter.zsh — set
-# "input as" to {query}, leave "Alfred filters results" UNCHECKED, so this runs
-# on every keystroke and store-json.py filters itself (see reglib.query_matches
-# for why: Alfred's own built-in live filter can fail on query text spanning a
-# digit-to-letter boundary in one word).
+# opens every register at it in Royal TSX. Same two required Alfred settings as
+# reg-filter.zsh (see mac/alfred/README.md): "Alfred filters results"
+# UNCHECKED, and "with input as" set to argv — NOT {query}, which never
+# populates $1. This runs on every keystroke and store-json.py filters itself
+# (see reglib.query_matches for why: Alfred's own built-in live filter can fail
+# on query text spanning a digit-to-letter boundary in one word).
 # Reuses the schema discovery and helpers from ~/.zsh/local-tools.zsh, same as
 # the register filter, so the two never drift.
 #

@@ -9,6 +9,11 @@ Each item's arg is "<proto> <store>" (a plain space so Alfred's "input as argv"
 splits it into $1=proto $2=store). The store is the hostname prefix with the
 regNN suffix stripped (e.g. 0003), which is what the awk in _reg_rtsx_store
 matches. cmd/alt swap the protocol, mirroring the per-register filter.
+
+The live Alfred query arrives in argv[2] (empty/absent = show every store) and
+is matched with reglib.query_matches, not Alfred's own live filter — see that
+docstring for why. The Script Filter must have "Alfred filters results"
+UNCHECKED so it's invoked on every keystroke with the current query.
 """
 import json
 import re
@@ -33,6 +38,7 @@ def store_subtitle(count, m):
 
 def main():
     meta = reglib.load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
+    query = sys.argv[2] if len(sys.argv) > 2 else ""
     inventory = reglib.read_inventory(sys.stdin)
 
     # Group registers by store (hostname prefix), preserving first-seen order.
@@ -53,9 +59,10 @@ def main():
         s = stores[key]
         m = s["meta"]
         num = m.get("store") or key.lstrip("0") or key
+        if not reglib.query_matches(query, key, num, m.get("city"),
+                                     m.get("state"), m.get("regional")):
+            continue
         sub = store_subtitle(s["count"], m)
-        match = " ".join(x for x in (
-            key, num, m.get("city"), m.get("state"), m.get("regional")) if x)
         arg = lambda proto: "{} {}".format(proto, key)
         plural = "{} register{}".format(s["count"], "" if s["count"] == 1 else "s")
         items.append({
@@ -63,7 +70,6 @@ def main():
             "title": "Store {}".format(num),
             "subtitle": sub,
             "arg": arg("vnc"),
-            "match": match,
             "mods": {
                 "cmd": {"subtitle": "SSH — {}".format(plural), "arg": arg("ssh")},
                 "alt": {"subtitle": "SFTP — {}".format(plural), "arg": arg("sftp")},
@@ -72,8 +78,13 @@ def main():
         })
 
     if not items:
-        items = [{"title": "No stores", "subtitle":
-                  "check REG_DB and the ssh config", "valid": False}]
+        if inventory and query.strip():
+            items = [{"title": "No matches", "subtitle":
+                      'no store matches "{}"'.format(query.strip()),
+                      "valid": False}]
+        else:
+            items = [{"title": "No stores", "subtitle":
+                      "check REG_DB and the ssh config", "valid": False}]
 
     json.dump({"items": items}, sys.stdout, ensure_ascii=False)
 

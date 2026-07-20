@@ -18,15 +18,29 @@ connection when no object exists. See `../royaltsx/README.md`.
 
 For each pair, in the workflow editor:
 
-1. **Script Filter** — set the keyword (e.g. `reg` and `store`), "Alfred filters
-   results", language **/bin/zsh**, "with input as **{query}**", and the script:
-   `"$HOME/dotfiles/mac/alfred/reg-filter.zsh"` (or `store-filter.zsh`).
+1. **Script Filter** — set the keyword (e.g. `reg` and `store`), language
+   **/bin/zsh**, "with input as **{query}**", the script:
+   `"$HOME/dotfiles/mac/alfred/reg-filter.zsh"` (or `store-filter.zsh`) —
+   and leave **"Alfred filters results" UNCHECKED**.
 2. **Run Script action** the Script Filter connects to — language **/bin/zsh**,
    "with input as **argv**", script:
    `"$HOME/dotfiles/mac/alfred/reg-connect.zsh" "$@"` (or `store-connect.zsh`).
 
 Modifiers on the results: **⌘** = SSH, **⌥** = SFTP (default is VNC), matching
 `frtsx`'s Enter / Ctrl-S / Ctrl-F.
+
+**Leave "Alfred filters results" unchecked.** With it checked, Alfred emits the
+full list once and filters it live using its own fuzzy matcher — which has a
+real bug: query text that crosses a digit-to-letter boundary inside one word
+can score zero even though a shorter prefix matched fine a keystroke earlier
+(typing the full hostname `0112reg99` can show *no* results, even though
+`0112` alone matched every register at that store). Unchecked, Alfred re-runs
+the script on every keystroke with the live query as `$1`/`{query}`, and
+`reg-json.py`/`store-json.py` filter themselves with a plain case-insensitive
+substring match per whitespace-split query term (`reglib.query_matches`) — so
+the full hostname always matches itself. This is the same reason Royal Apps'
+own official Alfred workflow for Royal TSX does its own manual filtering
+instead of trusting Alfred's.
 
 Item args are `"<proto> <host>"` / `"<proto> <store>"` — a plain space that
 Alfred's "input as argv" splits. Set `REG_RTSX_DEBUG=1` in `~/.zshrc.local` to

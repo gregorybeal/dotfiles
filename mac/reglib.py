@@ -69,6 +69,32 @@ def subtitle(m):
     return " · ".join(bits)
 
 
+def query_matches(query, *fields):
+    """True if every whitespace-split term in `query` is a case-insensitive
+    substring of `fields` joined together.
+
+    This is what the Alfred filters use instead of Alfred's own built-in live
+    filter ("Alfred filters results" + a "match" field). That filter has a real
+    quirk: its fuzzy scoring can fail on query text that crosses a digit-to-
+    letter boundary inside one unbroken word — searching the full hostname
+    "0112reg99" can return zero results even though "0112" alone matches
+    everything, because there is no space/case-change for it to anchor on.
+    Royal Apps' own official Alfred workflow for Royal TSX does its own manual
+    substring filtering for exactly this reason, rather than trust Alfred's
+    matcher. Plain substring-per-term is deterministic: the full hostname
+    always matches itself.
+
+    Using this means the Script Filter must have "Alfred filters results"
+    UNCHECKED — the script is invoked on every keystroke and returns only the
+    items that already match, instead of Alfred filtering a static list.
+    """
+    query = (query or "").strip().lower()
+    if not query:
+        return True
+    haystack = " ".join(str(f) for f in fields if f).lower()
+    return all(term in haystack for term in query.split())
+
+
 def make_target_of(environ=os.environ):
     """target_of(host, ip) — what to hand Royal TSX for a register.
 

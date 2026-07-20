@@ -1,9 +1,17 @@
 #!/bin/zsh
 # reg-filter.zsh — Alfred Script Filter: list POS registers as Alfred items.
 #
-# Set the Script Filter to "Alfred filters results": this runs once per keyword
-# invocation, emits every register, and lets Alfred do the live matching. It
-# reuses the schema discovery and helpers from ~/.zsh/local-tools.zsh, so it
+# Set the Script Filter's "input as" to {query} and leave "Alfred filters
+# results" UNCHECKED. Alfred then re-runs this script on every keystroke with
+# the live query as $1, and reg-json.py does the matching itself (plain
+# case-insensitive substring per whitespace-split term — see
+# reglib.query_matches). Do NOT check "Alfred filters results": Alfred's own
+# built-in live filter can fail on query text that crosses a digit-to-letter
+# boundary inside one word — e.g. typing the full hostname "0112reg99" can
+# return zero results even though "0112" alone matches everything — which is
+# exactly the bug this design avoids.
+#
+# Reuses the schema discovery and helpers from ~/.zsh/local-tools.zsh, so it
 # stays in step with the fzf tools and never re-hardcodes a table or column.
 #
 # Emits Alfred JSON on stdout. Each item's arg is "<proto>\t<target>"; the
@@ -27,4 +35,4 @@ hosts=$(_reg_hosts 2>/dev/null) || {
     exit 0
 }
 
-print -r -- "$hosts" | python3 "${0:A:h}/reg-json.py" <(_reg_meta_full)
+print -r -- "$hosts" | python3 "${0:A:h}/reg-json.py" <(_reg_meta_full) "$1"

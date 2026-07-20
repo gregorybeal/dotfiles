@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Format registers as Alfred Script Filter JSON.
 
-Reads the inventory + metadata inputs described in reglib (stdin + argv[1]).
-Each item's arg is "<proto> <host>" (a plain space so Alfred's "input as argv"
+Reads the inventory + metadata inputs described in reglib (stdin + argv[1]),
+plus the live Alfred query in argv[2] (empty/absent = show everything). Each
+item's arg is "<proto> <host>" (a plain space so Alfred's "input as argv"
 splits it into $1=proto $2=host). reg-connect.zsh turns that into a connection:
 it opens the stored Royal TSX object for that host+proto, falling back to ad
 hoc. The register hostname is the object-name key, so this file passes the bare
 host, not a resolved target — reg-connect owns hostname/IP resolution (shared
 with frtsx via _reg_rtsx_connect). The resolved target is still shown in the
 subtitle/copy text, via reglib's REG_RTSX_TARGET/REG_HOSTS_FILE handling.
+
+Filtering happens here (reglib.query_matches), not in Alfred — see that
+docstring for why. The Script Filter must have "Alfred filters results"
+UNCHECKED so it's invoked on every keystroke with the current query.
 """
 import json
 import sys
@@ -20,6 +25,7 @@ import reglib
 
 def main():
     meta = reglib.load_meta(sys.argv[1]) if len(sys.argv) > 1 else {}
+    query = sys.argv[2] if len(sys.argv) > 2 else ""
     inventory = reglib.read_inventory(sys.stdin)
     target_of = reglib.make_target_of()
 
@@ -27,12 +33,11 @@ def main():
     for host in inventory:
         m = meta.get(host, {})
         ip = m.get("ip", "")
+        if not reglib.query_matches(query, host, m.get("store"), m.get("city"),
+                                     m.get("state"), m.get("regional"), ip):
+            continue
         target = target_of(host, ip)
-
         sub = reglib.subtitle(m)
-        match = " ".join(x for x in (
-            host, m.get("store"), m.get("city"), m.get("state"),
-            m.get("regional"), ip) if x)
 
         # "<proto> <host>" — a plain space, so Alfred's "input as argv" splits
         # it into $1=proto $2=host. A register hostname has no spaces, so this is
@@ -44,7 +49,6 @@ def main():
             "title": host,
             "subtitle": sub or "(not in inventory database)",
             "arg": arg("vnc"),
-            "match": match,
             "mods": {
                 "cmd": {"subtitle": "SSH — {}".format(target), "arg": arg("ssh")},
                 "alt": {"subtitle": "SFTP — {}".format(target), "arg": arg("sftp")},
@@ -53,8 +57,13 @@ def main():
         })
 
     if not items:
-        items = [{"title": "No registers", "subtitle":
-                  "check REG_DB and the ssh config", "valid": False}]
+        if inventory and query.strip():
+            items = [{"title": "No matches", "subtitle":
+                      'no register matches "{}"'.format(query.strip()),
+                      "valid": False}]
+        else:
+            items = [{"title": "No registers", "subtitle":
+                      "check REG_DB and the ssh config", "valid": False}]
 
     json.dump({"items": items}, sys.stdout, ensure_ascii=False)
 

@@ -74,6 +74,7 @@ convention (default action needs no shortcut, everything else does):
 - **Enter** — open (VNC)
 - **⌘Enter** — open via SSH
 - **⌥Enter** — open via SFTP
-- **⌘⇧C** — copy IP address (registers only, hidden when a register has no
-  IP on record — mirrors `mods.shift.valid` in `reg-json.py`)
+- **⇧Enter** — copy IP address (registers only, hidden when a register has no
+  IP on record — mirrors both the shift modifier in Alfred and
+  `mods.shift.valid` in `reg-json.py`)
 - **⌘.** — copy hostname / store number

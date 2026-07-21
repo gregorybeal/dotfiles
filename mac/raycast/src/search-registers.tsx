@@ -114,7 +114,7 @@ export default function SearchRegisters() {
                       <Action.CopyToClipboard
                         title="Copy IP Address"
                         content={ip}
-                        shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                        shortcut={{ modifiers: ["shift"], key: "return" }}
                       />
                     )}
                     <Action.CopyToClipboard

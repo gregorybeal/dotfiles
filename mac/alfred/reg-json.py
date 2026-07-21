@@ -14,6 +14,10 @@ subtitle/copy text, via reglib's REG_RTSX_TARGET/REG_HOSTS_FILE handling.
 Filtering happens here (reglib.query_matches), not in Alfred — see that
 docstring for why. The Script Filter must have "Alfred filters results"
 UNCHECKED so it's invoked on every keystroke with the current query.
+
+The shift modifier is "copy <ip>", not "<proto> <host>" like the others —
+reg-connect.zsh special-cases the "copy" proto to pbcopy its second field
+directly instead of resolving it as a register hostname.
 """
 import json
 import sys
@@ -52,6 +56,11 @@ def main():
             "mods": {
                 "cmd": {"subtitle": "SSH — {}".format(target), "arg": arg("ssh")},
                 "alt": {"subtitle": "SFTP — {}".format(target), "arg": arg("sftp")},
+                "shift": {
+                    "subtitle": "Copy IP — {}".format(ip) if ip else "No IP in inventory",
+                    "arg": "copy {}".format(ip),
+                    "valid": bool(ip),
+                },
             },
             "text": {"copy": target, "largetype": "{}\n{}".format(host, sub)},
         })

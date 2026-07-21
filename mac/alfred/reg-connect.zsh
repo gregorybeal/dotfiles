@@ -3,7 +3,9 @@
 #
 # Alfred passes the chosen item's arg ("<proto> <host>") as $1 $2, or as a
 # single space/tab-delimited {query}. The default action is vnc; the cmd and alt
-# modifiers swap in ssh and sftp (see reg-json.py).
+# modifiers swap in ssh and sftp, and the shift modifier passes "copy <ip>"
+# instead — handled below by pbcopy, before any of the Royal TSX logic (see
+# reg-json.py).
 #
 # This is frtsx's handoff without the picker: it opens the register's *stored*
 # Royal TSX object — the one the RoyalJSON dynamic folder generated, which
@@ -30,5 +32,13 @@ fi
     print -u2 "reg-connect: expected '<proto> <host>', got: $*"
     exit 1
 }
+
+# "copy <ip>" — the shift modifier's arg. $host here is actually the IP
+# (reg-json.py skips the usual proto/host convention for this one), so just
+# put it on the clipboard instead of resolving anything in Royal TSX.
+if [[ $proto == copy ]]; then
+    print -n -- "$host" | pbcopy
+    exit 0
+fi
 
 _reg_rtsx_connect "$proto" "$host"

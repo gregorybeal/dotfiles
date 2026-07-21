@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, List, closeMainWindow, showHUD, showToast, Toast } from "@raycast/api";
 import { AlfredItem, Proto, connect, fetchRegisters } from "./lib/scripts";
 
 // Alfred's native app doesn't blink at rendering the whole company-wide
@@ -42,12 +42,17 @@ export default function SearchRegisters() {
       });
   }, [query]);
 
+  // Custom Action.onAction handlers don't auto-close Raycast's window the
+  // way built-in actions (e.g. Action.CopyToClipboard) do, so close it
+  // ourselves before the connection finishes rather than after — a HUD still
+  // shows up post-close, unlike a regular toast.
   async function run(proto: Proto, host: string, label: string) {
+    await closeMainWindow();
     try {
       await connect("reg-connect.zsh", proto, host);
-      await showToast({ style: Toast.Style.Success, title: `Opening ${label}`, message: host });
+      await showHUD(`Opening ${label} — ${host}`);
     } catch (error) {
-      await showToast({ style: Toast.Style.Failure, title: `Failed to open ${label}`, message: String(error) });
+      await showHUD(`Failed to open ${label}: ${String(error)}`);
     }
   }
 

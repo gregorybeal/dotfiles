@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, List, closeMainWindow, showHUD, showToast, Toast } from "@raycast/api";
 import { AlfredItem, Proto, connect, fetchStores, parseStoreRegisters } from "./lib/scripts";
 
 // Same reasoning as search-registers.tsx: don't fetch/render the full store
@@ -36,16 +36,17 @@ export default function SearchStores() {
       });
   }, [query]);
 
+  // Custom Action.onAction handlers don't auto-close Raycast's window the
+  // way built-in actions (e.g. Action.CopyToClipboard) do, so close it
+  // ourselves before the connection finishes rather than after — a HUD still
+  // shows up post-close, unlike a regular toast.
   async function run(proto: Proto, store: string, label: string) {
+    await closeMainWindow();
     try {
       await connect("store-connect.zsh", proto, store);
-      await showToast({
-        style: Toast.Style.Success,
-        title: `Opening ${label}`,
-        message: `every register at ${store}`,
-      });
+      await showHUD(`Opening ${label} — every register at ${store}`);
     } catch (error) {
-      await showToast({ style: Toast.Style.Failure, title: `Failed to open ${label}`, message: String(error) });
+      await showHUD(`Failed to open ${label}: ${String(error)}`);
     }
   }
 

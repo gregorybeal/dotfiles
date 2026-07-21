@@ -18,6 +18,12 @@ UNCHECKED so it's invoked on every keystroke with the current query.
 The shift modifier is "copy <ip>", not "<proto> <host>" like the others —
 reg-connect.zsh special-cases the "copy" proto to pbcopy its second field
 directly instead of resolving it as a register hostname.
+
+Each item also carries a "variables" object (Alfred's per-item workflow
+variables — harmless/unused here) with the raw store/city/state/regional/ip
+fields broken out individually. Alfred ignores it; it exists so other
+consumers of this same JSON (e.g. the Raycast extension in ../raycast) don't
+have to re-parse the formatted subtitle string.
 """
 import json
 import sys
@@ -63,6 +69,15 @@ def main():
                 },
             },
             "text": {"copy": target, "largetype": "{}\n{}".format(host, sub)},
+            "variables": {
+                "host": host,
+                "store": m.get("store", ""),
+                "city": m.get("city", ""),
+                "state": m.get("state", ""),
+                "regional": m.get("regional", ""),
+                "ip": ip,
+                "target": target,
+            },
         })
 
     if not items:

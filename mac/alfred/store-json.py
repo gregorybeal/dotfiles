@@ -14,6 +14,12 @@ The live Alfred query arrives in argv[2] (empty/absent = show every store) and
 is matched with reglib.query_matches, not Alfred's own live filter — see that
 docstring for why. The Script Filter must have "Alfred filters results"
 UNCHECKED so it's invoked on every keystroke with the current query.
+
+Each item also carries a "variables" object (Alfred's per-item workflow
+variables — harmless/unused here) with the raw city/state/regional fields and
+the full per-register host/ip list broken out. Alfred ignores it; it exists so
+other consumers of this same JSON (e.g. the Raycast extension in ../raycast)
+don't have to re-parse the formatted subtitle string.
 """
 import json
 import re
@@ -43,16 +49,17 @@ def main():
 
     # Group registers by store (hostname prefix), preserving first-seen order.
     order = []
-    stores = {}       # key -> {"count": int, "meta": {...}}
+    stores = {}       # key -> {"count": int, "meta": {...}, "registers": [(host, ip), ...]}
     for host in inventory:
         key = STRIP_REG.sub("", host)
         s = stores.get(key)
         if s is None:
             order.append(key)
-            s = stores[key] = {"count": 0, "meta": meta.get(host, {})}
+            s = stores[key] = {"count": 0, "meta": meta.get(host, {}), "registers": []}
         s["count"] += 1
         if not s["meta"]:                       # fill metadata from any register
             s["meta"] = meta.get(host, {})
+        s["registers"].append((host, meta.get(host, {}).get("ip", "")))
 
     items = []
     for key in order:
@@ -75,6 +82,15 @@ def main():
                 "alt": {"subtitle": "SFTP — {}".format(plural), "arg": arg("sftp")},
             },
             "text": {"copy": key},
+            "variables": {
+                "store": num,
+                "city": m.get("city", ""),
+                "state": m.get("state", ""),
+                "regional": m.get("regional", ""),
+                "registers": json.dumps(
+                    [{"host": h, "ip": r_ip} for h, r_ip in s["registers"]]
+                ),
+            },
         })
 
     if not items:

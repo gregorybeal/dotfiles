@@ -1,0 +1,43 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "register-lookup",
+  "title": "Register Lookup",
+  "description": "Search POS registers and stores, connect via VNC/SSH/SFTP, and copy a register's IP — a thin Raycast UI over the same reg-filter.zsh/reg-connect.zsh scripts the Alfred workflow uses.",
+  "icon": "icon.png",
+  "author": "gregorybeal",
+  "categories": [
+    "Developer Tools",
+    "System"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "search-registers",
+      "title": "Search Registers",
+      "description": "Find a register by hostname, store number, city, state, or regional and connect to it",
+      "mode": "view"
+    },
+    {
+      "name": "search-stores",
+      "title": "Search Stores",
+      "description": "Find a store and connect to every register at it",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.94.0",
+    "@raycast/utils": "^1.19.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

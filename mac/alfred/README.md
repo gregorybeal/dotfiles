@@ -20,9 +20,13 @@ For each pair, in the workflow editor:
 
 1. **Script Filter** — set the keyword (e.g. `reg` and `store`), language
    **/bin/zsh**, the script:
-   `"$HOME/dotfiles/mac/alfred/reg-filter.zsh"` (or `store-filter.zsh`) —
+   `"$HOME/dotfiles/mac/alfred/reg-filter.zsh" "$1"` (or `store-filter.zsh`) —
    leave **"Alfred filters results" UNCHECKED**, and once it's unchecked, set
    the now-enabled **"with input as"** dropdown to **`argv`** (NOT `{query}`).
+   The trailing `"$1"` is required: `argv` mode appends the live query as an
+   argument to whatever code is in the Script field, but a bare path doesn't
+   forward it on to the invoked script — without `"$1"` here, `reg-filter.zsh`
+   always runs with zero arguments regardless of what you type.
 2. **Run Script action** the Script Filter connects to — language **/bin/zsh**,
    "with input as **argv**", script:
    `"$HOME/dotfiles/mac/alfred/reg-connect.zsh" "$@"` (or `store-connect.zsh`).
@@ -48,8 +52,10 @@ the other:
   are invoked by file path with no such token in the field, that mode never
   populates `$1`, so the live query never reaches the script and it always
   returns the *entire* unfiltered list no matter what you type. `argv` mode is
-  what actually puts the live query in `$1`, which is what `reg-filter.zsh` /
-  `store-filter.zsh` read.
+  what puts the live query into `$1` — but only within the Script field's own
+  code, so the field must explicitly forward it (`"$1"` after the path); a
+  bare path silently drops it and produces the same always-unfiltered
+  symptom as `{query}` mode.
 
 Item args are `"<proto> <host>"` / `"<proto> <store>"` — a plain space that
 Alfred's "input as argv" splits. Set `REG_RTSX_DEBUG=1` in `~/.zshrc.local` to

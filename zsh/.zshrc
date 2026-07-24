@@ -93,3 +93,7 @@ source "$HOME/.zsh/local-tools.zsh"
 [ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
 export PATH="/opt/homebrew/bin:$PATH"
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/gbeal/.lmstudio/bin"
+# End of LM Studio CLI section
+

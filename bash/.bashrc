@@ -38,3 +38,8 @@ command -v uv >/dev/null 2>&1 && eval "$(uv generate-shell-completion bash)"
 # ---------- Local-only ----------
 [ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
 [ -f "$HOME/.bashrc.local" ] && source "$HOME/.bashrc.local"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/gbeal/.lmstudio/bin"
+# End of LM Studio CLI section
+

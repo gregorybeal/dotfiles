@@ -9,3 +9,4 @@ ssh/registers
 __pycache__/
 *.pyc
 1password/.config/1Password/telemetry-enabled
+mac/raycast/node_modules

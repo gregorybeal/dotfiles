@@ -82,7 +82,7 @@ alias edit-ssh='${EDITOR:-vi} ~/.ssh/config'
 if command -v bat >/dev/null 2>&1; then alias cat='bat --paging=never'; fi
 if command -v batcat >/dev/null 2>&1; then alias cat='batcat --paging=never'; fi
 if command -v eza >/dev/null 2>&1; then
-    alias ls='eza -a --icons'
+    alias ls='eza -a --icons auto'
     alias ll='eza -lh --icons --git'
     alias la='eza -lah --icons --git'
     alias tree='eza --tree --icons'
@@ -111,7 +111,10 @@ fi
 # SSH Tunnels
 alias socks-up='tmux new -d -s sock1080 "ssh -N -D 127.0.0.1:1080 gbeal@lassssgate01.traderjoes.com" && tmux new -d -s sock1081 "ssh -N -D 127.0.0.1:1081 greg@100.118.20.30"'
 alias socks-down='tmux kill-session -t sock1080 2>/dev/null; tmux kill-session -t sock1081 2>/dev/null'
+alias tunnel='killall boring ; boring o -a'
 
 # Tools
 alias hdm='uv run --directory /Users/gbeal/Tools/hdmenu Menu.py'
+alias pos='uv run --directory /Users/gbeal/Tools/hdmenu Menu.py info'
 alias cdid='uv run --project /Users/gbeal/Tools/Analysis /Users/gbeal/Tools/Analysis/loyalty_lookup.py'
+alias idcheck='uv run --directory ~/Git/DB2_Tools db2tool discount_id_lookup --id'

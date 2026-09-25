@@ -40,7 +40,8 @@ font-thicken = true
 # appearance. Format: theme = light:<name>,dark:<name>
 # When your Mac switches to dark mode (or via schedule), Ghostty follows.
 # theme = light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark
-theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+# theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+theme = Catppuccin Mocha
 
 # ── Alternate themes ──────────────────────────────────────────
 # To use one instead of the auto-switching above, comment out the
@@ -192,6 +193,10 @@ keybind = cmd+enter=toggle_fullscreen
 # Quick terminal — a drop-down terminal toggled with a global hotkey
 # (like Guake/iTerm hotkey window). Great for quick commands.
 keybind = global:cmd+grave_accent=toggle_quick_terminal
+quick-terminal-position = center
+quick-terminal-size = 50%, 50%
+quick-terminal-screen = mouse
+quick-terminal-animation-duration = 0.0
 
 # Reload config without restarting
 keybind = cmd+shift+comma=reload_config

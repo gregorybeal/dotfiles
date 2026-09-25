@@ -56,9 +56,9 @@ def parse_args(argv=None):
                         "any previous block. Needs write access: run under sudo")
     p.add_argument("--jump", default="lassssgate01.traderjoes.com",
                    help="ProxyJump gateway host")
-    p.add_argument("--term", default="xterm-256color",
+    p.add_argument("--term", default="xterm",
                    help="Pin TERM for register sessions via SetEnv (default: "
-                        "xterm-256color; pass '' to disable). Fixes garbled "
+                        "xterm; pass '' to disable). Fixes garbled "
                         "output when the remote lacks the xterm-ghostty "
                         "terminfo. Needs OpenSSH 8.7+ on the client.")
     p.add_argument("--out", default=SSH_DEFAULT_OUT,

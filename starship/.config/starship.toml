@@ -4,6 +4,7 @@
 format = """
 $shell\
 $directory\
+$git_branch\
 $hostname
 $character"""
 
@@ -42,14 +43,20 @@ success_symbol = "[❯](bold green)"
 error_symbol = "[❯](bold red)"
 vimcmd_symbol = "[V](bold yellow)"
 
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch]($style) "
+truncation_length = 20
+truncation_symbol = "…"
+
+
 # Disable everything else
 [username]
 disabled = true
-[git_branch]
+[git_state]
 disabled = true
 [git_status]
-disabled = true
-[git_state]
 disabled = true
 [cmd_duration]
 disabled = true

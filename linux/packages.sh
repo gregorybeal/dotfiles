@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# linux/packages.sh — install dev tools on Ubuntu/Debian with sudo.
+# linux/packages.sh — install dev tools on Ubuntu/Debian/WSL: a small apt base,
+# then linux/Brewfile if Homebrew is installed (apt + upstream installers if not).
 # Run with: ./linux/packages.sh
 # Or:       make linux-packages
 # Idempotent — safe to re-run.
@@ -8,26 +9,62 @@ set -e
 echo "Installing Linux packages..."
 echo ""
 
+IS_WSL=0
+grep -qi microsoft /proc/version 2>/dev/null && IS_WSL=1
+
+# Pick up Linuxbrew even when the calling shell hasn't loaded it yet (e.g. the
+# first bootstrap, before the stowed .bashrc/.zshenv have ever been sourced).
+if ! command -v brew >/dev/null 2>&1; then
+    for b in /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+        [ -x "$b" ] && { eval "$("$b" shellenv)"; break; }
+    done
+fi
+
 # ─────────────────────────────────────────────────────────────
-#  APT packages
+#  APT base — always from apt, even when Homebrew is present
+#  (see linux/Brewfile for why each of these stays on apt)
 # ─────────────────────────────────────────────────────────────
 sudo apt-get update -qq
 
 sudo apt-get install -y \
-    `# Shell` \
-    zsh tmux stow \
-    `# Core` \
-    git curl wget tree watch build-essential \
-    `# Modern CLI tools` \
-    fzf bat fd-find ripgrep jq htop btop \
-    `# Network / SSH` \
-    openssh-client mtr nmap iperf3 sshpass sshfs \
-    `# Dev` \
-    sqlite3 ansible
+    zsh stow git curl wget unzip build-essential procps file \
+    openssh-client sshfs mtr socat
 
-# Ubuntu names these differently — add standard symlinks
-[ -f /usr/bin/batcat ]  && sudo ln -sf /usr/bin/batcat  /usr/local/bin/bat 2>/dev/null || true
-[ -f /usr/bin/fdfind ]  && sudo ln -sf /usr/bin/fdfind  /usr/local/bin/fd  2>/dev/null || true
+# wslu provides wslview (open URLs/files in Windows); not in every release's
+# default image, so don't let its absence abort the run.
+if [ "$IS_WSL" = 1 ]; then
+    sudo apt-get install -y wslu || echo "  wslu unavailable — falling back to explorer.exe for open/BROWSER"
+fi
+
+# ─────────────────────────────────────────────────────────────
+#  CLI tools — Homebrew when present (matches the Mac's versions),
+#  otherwise apt + the upstream installers below
+# ─────────────────────────────────────────────────────────────
+if command -v brew >/dev/null 2>&1; then
+    echo "Installing CLI tools from linux/Brewfile..."
+    brew bundle --verbose --file="$(dirname "$0")/Brewfile" \
+        || echo "brew bundle hit some errors — run 'make brew' to retry."
+    # Homebrew creates share/zsh group-writable, which makes compinit refuse
+    # to load completions from it ("insecure directories").
+    brew_prefix="$(brew --prefix)"
+    chmod g-w,o-w "$brew_prefix/share/zsh" "$brew_prefix/share/zsh/site-functions" 2>/dev/null || true
+else
+    sudo apt-get install -y \
+        `# Shell` \
+        tmux \
+        `# Core` \
+        tree watch \
+        `# Modern CLI tools` \
+        fzf bat fd-find ripgrep jq htop btop \
+        `# Network / SSH` \
+        nmap iperf3 sshpass \
+        `# Dev` \
+        sqlite3 ansible
+
+    # Ubuntu names these differently — add standard symlinks
+    [ -f /usr/bin/batcat ]  && sudo ln -sf /usr/bin/batcat  /usr/local/bin/bat 2>/dev/null || true
+    [ -f /usr/bin/fdfind ]  && sudo ln -sf /usr/bin/fdfind  /usr/local/bin/fd  2>/dev/null || true
+fi
 
 # ─────────────────────────────────────────────────────────────
 #  gh CLI (GitHub's official apt repo)
@@ -98,6 +135,25 @@ fi
 if ! command -v zoxide >/dev/null 2>&1; then
     echo "Installing zoxide..."
     curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+fi
+
+# ─────────────────────────────────────────────────────────────
+#  WSL: Windows-side helpers (installed with winget, on the Windows PATH)
+#    npiperelay — relays the 1Password SSH agent into WSL (zsh/.zsh/ssh-agent.zsh)
+#    win32yank  — UTF-8-safe clipboard for tmux, nvim, pbcopy/pbpaste
+# ─────────────────────────────────────────────────────────────
+if [ "$IS_WSL" = 1 ] && command -v winget.exe >/dev/null 2>&1; then
+    for pkg in npiperelay:albertony.npiperelay win32yank:equalsraf.win32yank; do
+        exe="${pkg%%:*}.exe" id="${pkg#*:}"
+        if ! command -v "$exe" >/dev/null 2>&1; then
+            echo "Installing $id (Windows, via winget)..."
+            # winget.exe complains about a \\wsl$ working directory — run from C:.
+            (cd /mnt/c && winget.exe install --id "$id" -e --silent \
+                --accept-source-agreements --accept-package-agreements) \
+                || echo "  winget install $id failed — install it from Windows"
+        fi
+    done
+    echo "  (new winget installs reach WSL's PATH after restarting Windows Terminal)"
 fi
 
 # ─────────────────────────────────────────────────────────────

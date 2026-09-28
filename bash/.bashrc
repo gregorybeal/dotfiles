@@ -11,6 +11,11 @@ shopt -s globstar
 
 # ---------- PATH additions ----------
 [[ "$(uname -s)" == "Darwin" ]] && [[ -d /opt/homebrew/bin ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
+for _brew in /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+    [ -x "$_brew" ] && { eval "$("$_brew" shellenv)"; break; }
+done
+unset _brew
+[ -n "$WSL_DISTRO_NAME" ] && export BROWSER="$(command -v wslview >/dev/null 2>&1 && echo wslview || echo explorer.exe)"
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
 [ -d "$HOME/.fzf/bin" ] && export PATH="$HOME/.fzf/bin:$PATH"

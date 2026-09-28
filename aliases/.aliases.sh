@@ -16,11 +16,31 @@ alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
 
-# Updating (brew/mas, so effectively Mac-only; update fetches metadata first,
+# Updating (brew everywhere, plus mas on Mac; update fetches metadata first,
 # then upgrade installs — the old order ran them backwards, and `mas update`
 # is not a mas subcommand)
-if command -v brew >/dev/null 2>&1; then
+if command -v mas >/dev/null 2>&1; then
     alias update='brew update && brew upgrade && mas upgrade'
+elif command -v brew >/dev/null 2>&1; then
+    alias update='brew update && brew upgrade'
+fi
+
+# WSL: Mac muscle memory — open files/URLs in Windows, and pbcopy/pbpaste on
+# the Windows clipboard. win32yank.exe (winget install equalsraf.win32yank)
+# round-trips UTF-8 correctly; clip.exe mangles anything non-ASCII.
+if [ -n "$WSL_DISTRO_NAME" ]; then
+    if command -v wslview >/dev/null 2>&1; then
+        alias open='wslview'
+    else
+        open() { explorer.exe "$(wslpath -w "${1:-.}" 2>/dev/null || echo "$1")"; }
+    fi
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        alias pbcopy='win32yank.exe -i --crlf'
+        alias pbpaste='win32yank.exe -o --lf'
+    else
+        alias pbcopy='clip.exe'
+        alias pbpaste='powershell.exe -NoProfile -Command Get-Clipboard | tr -d "\r"'
+    fi
 fi
 
 # Colors

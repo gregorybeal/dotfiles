@@ -3,6 +3,7 @@
 
 DOTFILES := $(shell pwd)
 OS := $(shell uname -s)
+WSL := $(shell grep -qi microsoft /proc/version 2>/dev/null && echo 1)
 
 CORE_PACKAGES := zsh bash aliases git ssh tmux nvim starship ghostty atuin btop powershell
 MAC_PACKAGES  := karabiner keyboardcowboy 1password
@@ -54,7 +55,7 @@ linux-packages:  ## Install Linux packages — Ubuntu/Debian with sudo (idempote
 	@./linux/packages.sh
 
 .PHONY: brew
-brew:  ## Install/update all Mac apps from Brewfile (Mac only — continues past failures)
+brew:  ## Install/update from mac/Brewfile, or linux/Brewfile on Linux/WSL (continues past failures)
 ifeq ($(OS),Darwin)
 	@echo "Caching sudo credentials (single prompt for all cask installs)..."
 	@sudo -v
@@ -76,15 +77,24 @@ ifeq ($(OS),Darwin)
 		}; \
 		kill $$KEEPALIVE_PID 2>/dev/null || true
 else
-	@echo "brew bundle only runs on Mac"
+	@command -v brew >/dev/null 2>&1 || { echo "Homebrew not installed — see https://brew.sh"; exit 1; }
+	@brew bundle --verbose --file=linux/Brewfile || echo "⚠ brew bundle hit errors — see output above"
 endif
 
 .PHONY: brew-check
-brew-check:  ## Show what's in Brewfile but not installed (Mac only)
+brew-check:  ## Show what's in this OS's Brewfile but not installed
 ifeq ($(OS),Darwin)
 	@brew bundle check --file=mac/Brewfile --verbose
 else
-	@echo "brew bundle only runs on Mac"
+	@brew bundle check --file=linux/Brewfile --verbose
+endif
+
+.PHONY: wt
+wt:  ## Merge windows-terminal/settings.json into Windows Terminal (WSL only; DRY=1 to preview)
+ifeq ($(WSL),1)
+	@./windows-terminal/sync.py $(if $(DRY),--dry-run)
+else
+	@echo "wt only runs under WSL"
 endif
 
 .PHONY: macos-defaults

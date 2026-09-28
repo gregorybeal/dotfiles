@@ -86,3 +86,8 @@ echo "Done! Next steps:"
 echo "  1. Restart your shell (or: exec zsh)"
 echo "  2. gh auth login"
 echo "  3. make doctor  — verify everything's healthy"
+if [ "$PLATFORM" = "wsl" ]; then
+    echo "  4. make wt      — apply Windows Terminal settings (backs up the old file)"
+    echo "  5. Windows side: install FiraCode Nerd Font, and turn on"
+    echo "     1Password → Settings → Developer → Use the SSH agent"
+fi

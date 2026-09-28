@@ -13,7 +13,8 @@ g.lazyvim_python_ruff = "ruff"
 -- ── Newcomer-friendly editor behaviour ───────────────────────────────
 -- Keep the mouse available as a fallback while vim motions become muscle memory.
 opt.mouse = "a"
--- Share the macOS system clipboard, so y/p work with other apps.
+-- Share the system clipboard, so y/p work with other apps. On WSL, nvim finds
+-- win32yank.exe on PATH automatically (clip.exe/powershell fallback is slow).
 opt.clipboard = "unnamedplus"
 -- Relative line numbers make motions like 5j / 3k obvious. If the shifting
 -- numbers feel disorienting at first, set this to false.

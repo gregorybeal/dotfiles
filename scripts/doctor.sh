@@ -210,6 +210,8 @@ fi
 
 if [ -f "$HOME/.ssh/id_ed25519" ] || [ -f "$HOME/.ssh/id_rsa" ]; then
     ok "SSH private key present"
+elif ssh-add -l >/dev/null 2>&1; then
+    info "No SSH key files — keys come from the agent (1Password)"
 else
     warn "No SSH private key found (generate with: ssh-keygen -t ed25519)"
 fi
@@ -219,6 +221,28 @@ if ssh-add -l >/dev/null 2>&1; then
     ok "ssh-agent running with $KEY_COUNT key(s) loaded"
 else
     warn "ssh-agent has no keys loaded (or isn't running)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+if grep -qi microsoft /proc/version 2>/dev/null; then
+section "WSL"
+# ─────────────────────────────────────────────────────────────
+
+    if command -v brew >/dev/null 2>&1; then
+        ok "Homebrew on PATH ($(brew --prefix))"
+    else
+        warn "Homebrew not on PATH — linux/Brewfile tools unavailable"
+    fi
+    check_cmd socat "relays the 1Password SSH agent"
+    check_cmd npiperelay.exe "1Password SSH agent bridge — winget install albertony.npiperelay"
+    check_cmd win32yank.exe "UTF-8-safe clipboard — winget install equalsraf.win32yank"
+    check_cmd wslview "open URLs/files in Windows — apt install wslu"
+
+    if [ "$SSH_AUTH_SOCK" = "$HOME/.1password/agent.sock" ]; then
+        ok "SSH_AUTH_SOCK bridged to 1Password on Windows"
+    else
+        warn "SSH_AUTH_SOCK isn't the 1Password bridge ($SSH_AUTH_SOCK) — using a local ssh-agent"
+    fi
 fi
 
 # ─────────────────────────────────────────────────────────────

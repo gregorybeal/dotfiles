@@ -34,4 +34,21 @@ export PATH="$HOME/.local/bin:$PATH"
 if [[ "$(uname -s)" == "Darwin" ]]; then
   [[ -d /opt/homebrew/bin ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
   export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+else
+  # Linuxbrew: the default multi-user prefix, or a per-user ~/.linuxbrew.
+  for _brew in /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+    [[ -x $_brew ]] && { eval "$($_brew shellenv)"; break }
+  done
+  unset _brew
+fi
+
+# ---------- WSL ----------
+# WSL_DISTRO_NAME is set by WSL itself (and inherited into tmux). Hand URLs to
+# the Windows browser — gh auth login, tmux-fzf-url, etc. all honour $BROWSER.
+if [[ -n $WSL_DISTRO_NAME ]]; then
+  if (( $+commands[wslview] )); then
+    export BROWSER=wslview
+  else
+    export BROWSER=explorer.exe
+  fi
 fi

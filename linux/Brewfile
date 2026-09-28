@@ -1,0 +1,48 @@
+# linux/Brewfile — CLI tools for Linux/WSL via Linuxbrew (brew bundle).
+# Mirrors the formula half of mac/Brewfile so versions match across machines.
+# Run with: make brew   (or: brew bundle --file=linux/Brewfile)
+#
+# NOT here, on purpose — these come from apt in linux/packages.sh:
+#   zsh    chsh needs a shell listed in /etc/shells; brew's zsh isn't
+#   sshfs  needs the system FUSE stack
+#   mtr    needs setuid/caps for raw sockets, which only the apt package sets up
+#   socat  the WSL 1Password SSH-agent relay should survive `brew cleanup`
+
+brew "tmux"
+brew "sesh"          # smart tmux session manager (prefix+T picker; uses zoxide+fzf)
+brew "stow"
+brew "git"
+brew "gh"
+brew "neovim"        # LazyVim needs a newer nvim than Ubuntu's apt ships
+brew "starship"
+brew "uv"
+brew "atuin"
+brew "fzf"
+brew "bat"
+brew "eza"
+brew "fd"
+brew "ripgrep"
+brew "zoxide"
+brew "jq"
+brew "yq"
+brew "tldr"
+brew "htop"
+brew "btop"
+brew "wget"
+brew "tree"
+brew "watch"
+brew "nmap"                 # network scanner
+brew "iperf3"               # bandwidth test
+brew "sshpass"
+brew "node"                 # for occasional npm tools
+brew "ansible"
+brew "sqlite"               # cli for the register inventory DB (fssh preview)
+brew "lazygit"
+brew "lazysql"
+brew "yazi"
+brew "duckdb"
+
+uv "ruff"                   # linter/formatter
+uv "httpie"                 # better curl
+uv "glances"                # system monitor
+uv "ipython"                # better REPL

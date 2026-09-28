@@ -55,6 +55,7 @@ zstyle ':completion:*' menu no
 # both /usr/share/fzf and /usr/share/doc/fzf/examples) must not source the
 # keybindings twice.
 for _fzf_dir in \
+  ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/opt/fzf/shell} \
   /opt/homebrew/opt/fzf/shell \
   /usr/local/opt/fzf/shell \
   /usr/share/fzf \
@@ -77,7 +78,7 @@ source "$HOME/.zsh/fzf.zsh"
 source "$HOME/.zsh/bindings.zsh"
 source "$HOME/.zsh/ssh-agent.zsh"
 source "$HOME/.zsh/plugins.zsh"
-source "$HOME/Git/JiraCLI/aliases.sh"
+[ -f "$HOME/Git/JiraCLI/aliases.sh" ] && source "$HOME/Git/JiraCLI/aliases.sh"
 
 # ---------- Prompt ----------
 export VIRTUAL_ENV_DISABLE_PROMPT=1

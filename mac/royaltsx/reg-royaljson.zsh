@@ -3,7 +3,8 @@
 # Dynamic Folder.
 #
 # Point a Dynamic Folder's command at this script (Type: Script/Command, on
-# macOS run with zsh). Royal TSX runs it, reads its stdout as RoyalJSON, and
+# macOS run with zsh; on Windows, Royal TS runs it inside WSL through the
+# PowerShell wrapper in windows/royalts/). Royal TSX runs it, reads its stdout as RoyalJSON, and
 # materialises every register as real VNC / SSH / SFTP connection objects. Set
 # the folder's credential and secure gateway once — every generated object
 # inherits them (CredentialsFromParent / SecureGatewayFromParent), so frtsx and

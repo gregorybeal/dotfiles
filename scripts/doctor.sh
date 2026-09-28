@@ -332,6 +332,15 @@ else
     fi
 fi
 
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    RTSCLI="${REG_RTSCLI:-$(ls -1d /mnt/c/Program\ Files/Royal\ TS\ V*/rtscli.exe 2>/dev/null | sort -V | tail -1)}"
+    if [ -n "$RTSCLI" ] && [ -x "$RTSCLI" ]; then
+        ok "Royal TS rtscli.exe found (frtsx) — $RTSCLI"
+    else
+        info "Royal TS rtscli.exe not found — frtsx unavailable (set REG_RTSCLI if installed elsewhere)"
+    fi
+fi
+
 if command -v sshfs >/dev/null 2>&1; then
     ok "sshfs present (fmount)"
 else

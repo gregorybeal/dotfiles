@@ -1,5 +1,8 @@
 # Royal TSX register connections (design B)
 
+> On Windows (Royal TS, driven from WSL) see [`windows/royalts/`](../../windows/royalts/README.md)
+> — same generator and object names, different transport.
+
 Turns the register inventory into **real Royal TSX connection objects** — one
 VNC, one SSH, one SFTP per register — via a [RoyalJSON][rjson] Dynamic Folder,
 so `frtsx` and the Alfred workflow can `connect` any register and get its

@@ -79,6 +79,7 @@ dotfiles/
 ├── linux/packages.sh            installs dev tools on Ubuntu/Debian/WSL (apt base + linux/Brewfile if brew exists)
 ├── linux/Brewfile               CLI tools via Linuxbrew — the formula half of mac/Brewfile
 ├── windows-terminal/            WSL: managed Windows Terminal settings + sync.py (run via `make wt`)
+├── windows/royalts/             WSL: Royal TS for Windows Dynamic Folder script — frtsx drives it via rtscli.exe
 ├── mac/Brewfile                 installs dev tools + GUI apps on Mac (brew bundle)
 ├── mac/macos-defaults.sh        applies macOS system preferences
 ├── mac/enable-touchid-sudo.sh   enables Touch ID for sudo (run via `make touchid`)
@@ -108,6 +109,7 @@ Same repo, same `./bootstrap.sh` — everything WSL-specific is gated on `$WSL_D
   Without `npiperelay.exe` it falls back to a local `ssh-agent` with key files, same as plain Linux.
 - **Clipboard:** tmux copy-mode, nvim (`unnamedplus`) and the `pbcopy`/`pbpaste` aliases use `win32yank.exe` (`winget install equalsraf.win32yank`) — `clip.exe` works but mangles non-ASCII. OSC 52 also works, since Windows Terminal supports it.
 - **Opening things:** `$BROWSER` and an `open` alias point at `wslview` (or `explorer.exe`), so `gh auth login`, tmux-fzf-url, `open .` all land in Windows.
+- **Royal TS:** `frtsx` / `frtsx-store` / Ctrl-P drive Royal TS for Windows through `rtscli.exe`, against the same RoyalJSON Dynamic Folder as the Mac (run inside WSL by a PowerShell one-liner). Setup: [`windows/royalts/README.md`](windows/royalts/README.md).
 - **Windows Terminal:** `windows-terminal/settings.json` holds only what's managed — Catppuccin Mocha scheme/theme (matching tmux + Ghostty), FiraCode Nerd Font, copy-on-select, and unbinding the keys WT would otherwise steal from tmux/nvim/zsh (`ctrl+v` → nvim block-visual, `alt+arrows`, `alt+shift+arrows`; paste is `ctrl+shift+v`). `make wt` merges it into the live settings (profiles, GUIDs and anything else you set in the UI are kept; the old file is backed up next to it), makes this distro the default profile, and starts it in `~`. `make wt DRY=1` shows the diff first. Install **FiraCode Nerd Font** on Windows — `make wt` warns if it's missing.
 
 ## Machine-specific / secret files (never committed, gitignored)

@@ -1,6 +1,38 @@
 # reg-rtsx.zsh — Royal TSX handoff: frtsx / frtsx-store open registers'
 # *stored* connection objects (created by mac/royaltsx's RoyalJSON dynamic
 # folder), falling back to ad hoc; plus the Ctrl-P picker widget.
+#
+# Two backends, same contract (object names, ad hoc fallback):
+#   macOS — Royal TSX, driven over AppleScript (osascript)
+#   WSL   — Royal TS for Windows, driven through its rtscli.exe (see
+#           windows/royalts/README.md)
+
+# Royal TS on Windows resolves through the *Windows* hosts file, so that is the
+# one that decides hostname-vs-IP (here and in reglib, hence the export).
+# Only a default: a REG_HOSTS_FILE set in ~/.zshrc.local (before or after this
+# file loads) still wins.
+if [[ -n $WSL_DISTRO_NAME && -z $REG_HOSTS_FILE ]]; then
+    export REG_HOSTS_FILE=/mnt/c/Windows/System32/drivers/etc/hosts
+fi
+
+# _reg_rtscli — print the path to Royal TS's rtscli.exe; fails off WSL or when
+# Royal TS isn't installed. REG_RTSCLI overrides; otherwise the newest
+# "C:\Program Files\Royal TS V<n>" install wins (n = numeric glob sort).
+_reg_rtscli() {
+    [[ -n $WSL_DISTRO_NAME ]] || return 1
+    if [[ -n $REG_RTSCLI ]]; then
+        [[ -x $REG_RTSCLI ]] && print -r -- "$REG_RTSCLI"
+        return
+    fi
+    local -a found=("/mnt/c/Program Files/Royal TS V"<->/rtscli.exe(N-.n))
+    (( ${#found} )) || return 1
+    print -r -- "${found[-1]}"
+}
+
+# Is there a Royal TS(X) to hand off to from here?
+_reg_rtsx_available() {
+    [[ $OSTYPE == darwin* ]] || _reg_rtscli >/dev/null
+}
 
 # ---------- Royal TSX ----------
 # _reg_ip <host> — resolve a register hostname to its IP address.
@@ -107,6 +139,16 @@ _reg_osa_debug() {
 # the fallback. Set REG_RTSX_DEBUG=1 to see why a denied prompt failed.
 _reg_rtsx_adhoc() {
     local conn="$1"
+    if [[ -n $WSL_DISTRO_NAME ]]; then
+        # Royal TS for Windows: its legacy rtsx:// scheme wants the protocol
+        # separator URL-encoded (%3a%2f%2f) and using=adhoc. Royal TSX's
+        # "user?@" becomes "user@", which Royal TS reads as a credential name.
+        # explorer.exe hands the URI to the registered handler and always
+        # exits non-zero, so there is no failure signal to check.
+        local proto=${conn%%://*} rest=${conn#*://}
+        explorer.exe "rtsx://${proto}%3a%2f%2f${rest/\?@/@}?using=adhoc"
+        return 0
+    fi
     if command -v osascript >/dev/null 2>&1; then
         local errf; errf=$(_reg_osa_errfile)
         printf 'tell application "Royal TSX" to adhoc "%s"\n' "$conn" \
@@ -150,7 +192,22 @@ _reg_rtsx_connect() {
     local proto="$1" host="$2" target="${3-}"
     local name; name=$(_reg_rtsx_name "$host" "$proto")
 
-    if command -v osascript >/dev/null 2>&1; then
+    local rtscli
+    if rtscli=$(_reg_rtscli); then
+        # rtscli connects every object with that name; the names are unique by
+        # the contract above. Its exit codes aren't documented, so treat either
+        # a non-zero exit or a not-found message as "no stored object". Run
+        # from C: so the Windows side doesn't inherit a \\wsl$ working dir.
+        local out rc
+        out=$(cd /mnt/c 2>/dev/null; "$rtscli" action connect -n="$name" 2>&1); rc=$?
+        out=${out//$'\r'/}
+        [[ -n $REG_RTSX_DEBUG ]] && \
+            print -u2 -P "%F{242}[rtsx] rtscli connect \"${name}\" -> rc=${rc}${out:+: ${out//\%/%%}}%f"
+        if (( rc == 0 )) && [[ ${out:l} != *("not found"|"no connection"|"could not find")* ]]; then
+            return 0
+        fi
+        print -u2 -P "%F{242}frtsx: no stored object \"${name}\"; connecting ad hoc%f"
+    elif command -v osascript >/dev/null 2>&1; then
         # Resolve the object id and connect it. The fast path is `get object id
         # with name` — a single round trip that makes Royal TSX do the lookup
         # internally, instead of marshalling id+name of *every* connection (many
@@ -213,7 +270,7 @@ _reg_rtsx_connect() {
 # sftp:// / FileTransfer works even though it is not in Royal Apps' published
 # protocol-identifier list — verified against a real Royal TSX.
 frtsx() {
-    [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx: Royal TSX is macOS-only"; return 1 }
+    _reg_rtsx_available || { print -u2 "frtsx: needs Royal TSX (macOS) or Royal TS + rtscli.exe (WSL)"; return 1 }
 
     local out key proto host rc=0
     out=$(_reg_pick_expect rtsx ctrl-s,ctrl-f \
@@ -267,7 +324,7 @@ _reg_rtsx_store() {
 # Passing a store number connects it as VNC — set REG_RTSX_STORE_PROTO to change
 # that default. Uses the same stored-object handoff as frtsx (_reg_rtsx_connect).
 frtsx-store() {
-    [[ $OSTYPE == darwin* ]] || { print -u2 "frtsx-store: Royal TSX is macOS-only"; return 1 }
+    _reg_rtsx_available || { print -u2 "frtsx-store: needs Royal TSX (macOS) or Royal TS + rtscli.exe (WSL)"; return 1 }
 
     local store="$1" proto="${REG_RTSX_STORE_PROTO:-vnc}" all
     all=$(_reg_hosts) || return

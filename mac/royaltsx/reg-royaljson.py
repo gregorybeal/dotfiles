@@ -111,7 +111,10 @@ def main():
     else:
         objects = flat
 
-    json.dump({"Objects": objects}, sys.stdout, ensure_ascii=False, indent=2)
+    # ASCII-only (non-ASCII as \uXXXX escapes — the same document once parsed):
+    # on Windows the output crosses wsl.exe → PowerShell → Royal TS, and any
+    # hop that guesses a code page would otherwise mangle "—" in folder names.
+    json.dump({"Objects": objects}, sys.stdout, ensure_ascii=True, indent=2)
 
 
 if __name__ == "__main__":

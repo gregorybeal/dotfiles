@@ -1,5 +1,8 @@
 -- ~/.config/nvim/init.lua — stowed from ~/dotfiles/nvim
 
+-- Bootstrap lazy.nvim + LazyVim (lua/config/lazy.lua) and everything in lua/plugins/.
+require("config.lazy")
+
 -- Vanilla Neovim leaves MsgArea (the ':' command-line / message area)
 -- uncoloured — it has no explicit background, so it falls through to the
 -- terminal's true default colours. tmux's window-style/window-active-style

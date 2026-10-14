@@ -25,6 +25,7 @@ _reg_mounts() {
 
 # fmount [-w] [query] — fuzzy-pick a register and sshfs-mount its root.
 # Prints the mountpoint, so `cd "$(fmount)"` works. Read-only unless -w.
+# tj-fn: fmount | sshfs-mount a picked register (read-only unless -w) | cd "$(fmount 0123)"
 fmount() {
     command -v sshfs >/dev/null 2>&1 || {
         print -u2 "fmount: sshfs not found"
@@ -67,6 +68,7 @@ fmount() {
 }
 
 # fumount [-a] — unmount register mounts (Tab to multi-select, -a for all)
+# tj-fn: fumount | Unmount register mounts (-a for all) | fumount -a
 fumount() {
     local all_mounts sel
     all_mounts=$(_reg_mounts)
@@ -98,6 +100,7 @@ fumount() {
 }
 
 # fmounts — list active register mounts
+# tj-fn: fmounts | List active register mounts | fmounts
 fmounts() {
     local m
     m=$(_reg_mounts)

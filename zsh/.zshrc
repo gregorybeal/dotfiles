@@ -86,6 +86,14 @@ command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 
 source "$HOME/.zsh/local-tools.zsh"
 
+# tj — fuzzy front door over tagged scripts/functions (see .zsh/tj.zsh).
+# ~/.local/bin is left out on purpose: it's uv/tool-installed symlinks, which
+# would bury the real to-do list in `tj -u`. The repo's scripts/ dir is found
+# through the ~/.zsh stow symlink so it works wherever the repo is cloned.
+TJ_PATHS=(~/bin ~/scripts ${${:-~/.zsh/tj.zsh}:A:h:h:h}/scripts)
+TJ_FN_FILES=(~/.zsh/reg-*.zsh(N) ~/.zsh/misc.zsh)
+source "$HOME/.zsh/tj.zsh"
+
 # =========================================================
 # Local-only / secrets
 # =========================================================

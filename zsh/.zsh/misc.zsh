@@ -1,6 +1,7 @@
 # misc.zsh — small non-register helpers.
 
 # ---------- yazi directory jump ----------
+# tj-fn: y | Yazi file manager; cd to the dir you quit in | y
 function y() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
     command yazi "$@" --cwd-file="$tmp"
@@ -24,6 +25,7 @@ function y() {
 # close enough to zsh syntax for alias bodies. --delimiter='=' + {2..} feeds
 # it everything after the alias's name= (an alias name can't itself contain
 # "=", so splitting on the first one is unambiguous).
+# tj-fn: falias | Browse aliases with fzf, preview the body | falias
 falias() {
     local out
     out=$(alias | fzf --delimiter='=' --query="$1" --prompt='alias ❯ ' \

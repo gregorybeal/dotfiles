@@ -186,6 +186,7 @@ _reg_vnc_tunnel_open() {
 # fvnc [query] — tunnel to registers' VNC ports and open a viewer for each
 # (Tab to multi-select). Each host gets its own local port and its own
 # self-closing tunnel.
+# tj-fn: fvnc | Tunnel to registers and open a VNC viewer for each | fvnc 0123
 fvnc() {
     local out
     out=$(_reg_pick_multi vnc "$1") || return
@@ -204,6 +205,7 @@ fvnc() {
 }
 
 # fvnc-list — show active VNC tunnels
+# tj-fn: fvnc-list | Show active VNC tunnels | fvnc-list
 fvnc-list() {
     local t
     t=$(_reg_vnc_tunnels)
@@ -213,6 +215,7 @@ fvnc-list() {
 }
 
 # fvnc-kill [-a] — close VNC tunnels (Tab to multi-select, -a for all)
+# tj-fn: fvnc-kill | Close VNC tunnels (-a for all) | fvnc-kill -a
 fvnc-kill() {
     local t sel
     t=$(_reg_vnc_tunnels)

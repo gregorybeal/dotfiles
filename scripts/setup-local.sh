@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# tj: Create machine-local config (git identity, jira-cli) | setup-local.sh
 # scripts/setup-local.sh — create machine-local, untracked config that Stow
 # doesn't (and shouldn't) manage. Idempotent — safe to re-run.
 set -e

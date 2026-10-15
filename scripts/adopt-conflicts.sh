@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# tj: Move files that block Stow into ~/.dotfiles-backup/<timestamp>/ | adopt-conflicts.sh zsh tmux
 # scripts/adopt-conflicts.sh — move pre-existing files/symlinks out of the
 # way of Stow before it runs, so a single conflict (e.g. Ubuntu's default
 # skel ~/.bashrc, a manually-configured ~/.config/ghostty/config from before

@@ -89,7 +89,7 @@ _tj_log() {
 _tj_menu() {
   local log=$TJ_LOG; [[ -r $log ]] || log=/dev/null
   _tj_index | awk -F'\t' -v OFS='\t' '
-    FNR==NR { c[$2]++; next }
+    FILENAME == ARGV[1] { c[$2]++; next }
     { n = ($1 in c) ? c[$1] : 0
       tag = ($2 == "script") ? "" : " [" $2 "]"
       printf "%-22s %s%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\n", $1, $3, tag, $1, $2, $3, $4, $5, $6, n }
@@ -158,7 +158,7 @@ tj() {
       awk -F'\t' -v c=$cutoff '$1 >= c { n[$2]++; last[$2]=substr($1,1,10) }
         END { for (k in n) printf "  %5d  %-22s last %s\n", n[k], k, last[k] }' $TJ_LOG | sort -rn
       local unused=$(_tj_index | awk -F'\t' -v c=$cutoff '
-        FNR==NR { if ($1 >= c) u[$2]=1; next } !($1 in u) { print "  " $1 }' $TJ_LOG -)
+        FILENAME == ARGV[1] { if ($1 >= c) u[$2]=1; next } !($1 in u) { print "  " $1 }' $TJ_LOG -)
       [[ -n $unused ]] && print "\nNot used${2:+ in that window}:\n$unused" ;;
     -u|--untagged)
       local d f

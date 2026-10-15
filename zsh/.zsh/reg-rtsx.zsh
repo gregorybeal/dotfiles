@@ -269,6 +269,7 @@ _reg_rtsx_connect() {
 #
 # sftp:// / FileTransfer works even though it is not in Royal Apps' published
 # protocol-identifier list — verified against a real Royal TSX.
+# tj-fn: frtsx | Open a register in Royal TS(X) (Enter VNC, ^S SSH, ^F SFTP) | frtsx 0123
 frtsx() {
     _reg_rtsx_available || { print -u2 "frtsx: needs Royal TSX (macOS) or Royal TS + rtscli.exe (WSL)"; return 1 }
 
@@ -323,6 +324,7 @@ _reg_rtsx_store() {
 # same keys as frtsx choose the protocol: Enter=VNC, Ctrl-S=SSH, Ctrl-F=SFTP.
 # Passing a store number connects it as VNC — set REG_RTSX_STORE_PROTO to change
 # that default. Uses the same stored-object handoff as frtsx (_reg_rtsx_connect).
+# tj-fn: frtsx-store | Open every register at a store in Royal TS(X) | frtsx-store 0123
 frtsx-store() {
     _reg_rtsx_available || { print -u2 "frtsx-store: needs Royal TSX (macOS) or Royal TS + rtscli.exe (WSL)"; return 1 }
 

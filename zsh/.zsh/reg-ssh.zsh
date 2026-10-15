@@ -35,6 +35,7 @@ _reg_tmux_panes() {
 # fssh [query] — fuzzy-pick registers and SSH in (Tab to multi-select).
 # One host opens a plain ssh session; several open a tmux window of tiled panes,
 # since a single shell cannot ssh to more than one host.
+# tj-fn: fssh | SSH to registers picked with fzf (Tab: several, tiled in tmux) | fssh 0123
 fssh() {
     local out
     out=$(_reg_pick_multi ssh "$1") || return
@@ -54,6 +55,7 @@ fssh() {
 }
 
 # frun [cmd] — run a command on one or more registers (Tab to multi-select)
+# tj-fn: frun | Run a command on picked registers | frun 'uptime'
 frun() {
     local hosts cmd="$*"
     _reg_hosts >/dev/null || return
@@ -71,6 +73,7 @@ frun() {
 }
 
 # fstore [store] — open a tmux session with one pane per register at a store
+# tj-fn: fstore | tmux session with one pane per register at a store | fstore 0123
 fstore() {
     command -v tmux >/dev/null || { print -u2 "fstore: tmux not found"; return 1 }
 

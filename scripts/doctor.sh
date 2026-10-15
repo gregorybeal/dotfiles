@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# tj: Health-check the dotfiles setup on this machine | doctor.sh
 # doctor.sh — verify dotfiles setup is healthy on this machine.
 # Reports what's working, what's missing, what needs attention.
 

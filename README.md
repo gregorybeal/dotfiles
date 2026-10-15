@@ -112,6 +112,38 @@ Same repo, same `./bootstrap.sh` — everything WSL-specific is gated on `$WSL_D
 - **Royal TS:** `frtsx` / `frtsx-store` / Ctrl-P drive Royal TS for Windows through `rtscli.exe`, against the same RoyalJSON Dynamic Folder as the Mac (run inside WSL by a PowerShell one-liner). Setup: [`windows/royalts/README.md`](windows/royalts/README.md).
 - **Windows Terminal:** `windows-terminal/settings.json` holds only what's managed — Catppuccin Mocha scheme/theme (matching tmux + Ghostty), FiraCode Nerd Font, copy-on-select, and unbinding the keys WT would otherwise steal from tmux/nvim/zsh (`ctrl+v` → nvim block-visual, `alt+arrows`, `alt+shift+arrows`; paste is `ctrl+shift+v`). `make wt` merges it into the live settings (profiles, GUIDs and anything else you set in the UI are kept; the old file is backed up next to it), makes this distro the default profile, and starts it in `~`. `make wt DRY=1` shows the diff first. Install **FiraCode Nerd Font** on Windows — `make wt` warns if it's missing.
 
+## tj — one front door for your tools
+
+`tj` (`zsh/.zsh/tj.zsh`, or `` ` `` `t` in tmux) opens a fuzzy menu of every
+tagged tool, with a description, a usage example, and the source, sorted with the
+ones you use most at the top. The menu is built from one comment line per tool,
+so it stays current without upkeep. The format is always `description | usage`
+(usage is optional).
+
+- **Scripts**: executable files in `TJ_PATHS` (`~/bin`, `~/scripts`, this repo's
+  `scripts/`). Put the tag near the top. The tool's name is the filename.
+  `# tj: Health-check the dotfiles setup on this machine | doctor.sh`
+- **Functions**: zsh files in `TJ_FN_FILES` (`reg-*.zsh`, `misc.zsh`). Put the tag
+  directly above the function.
+  `# tj-fn: fssh | SSH to registers picked with fzf | fssh 0123`
+- **Everything else** (lnav invocations, aliases, one-liners) goes in
+  `~/.config/tj/extras`, one tool per line:
+  `lnav-reg | Register logs in lnav | lnav ~/logs/retail_error*.log`
+
+| | |
+|---|---|
+| `tj` | Open the picker. Enter puts the command on the prompt, Ctrl-R runs it, Ctrl-E opens its source. |
+| `tj <name> [args]` | Run a tool directly (Tab-completes). |
+| `tj -l` / `tj -m` | List all tools / print a Markdown cheat sheet (for Obsidian). |
+| `tj -s [days]` | How often each tool runs, plus the ones you never use. |
+| `tj -u` | Executables in `TJ_PATHS` with no tag yet: the to-do list. |
+| `tj -e <name>` | Open a tool's source in `$EDITOR`. |
+
+Usage is logged (tool name and timestamp only, never arguments) to
+`~/.local/state/tj/usage.log`, and only when a tool is launched through `tj`.
+From a Windows launcher (PowerToys Run, Flow Launcher), point a shortcut at
+`wt.exe wsl.exe -e zsh -ic "tj <name>; exec zsh"`.
+
 ## Machine-specific / secret files (never committed, gitignored)
 
 - `~/.gitconfig.local` — **required**: `[user] name / email / signingkey`. Created by `make setup-local` (prompts on first run).
@@ -147,6 +179,7 @@ The **prefix is `` ` ``** (backtick, remapped from `C-b`). Press it twice to typ
 | Key | Action |
 |-----|--------|
 | `` ` `` `g` | Floating scratch shell in the current dir |
+| `` ` `` `t` | **tj** tool picker — Enter types `tj <tool> ` into the pane, Ctrl-R runs it |
 | `` ` `` `T` | **sesh** session picker over zoxide dirs + live sessions *(Mac: needs `sesh`)* |
 | `` ` `` `Tab` | **extrakto** — fuzzy-grab paths / URLs / words off the screen |
 | `` ` `` `u` | fzf over URLs visible in the pane, open one |

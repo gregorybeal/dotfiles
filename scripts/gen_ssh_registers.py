@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# tj: Regenerate the register SSH config from store_registers.db | gen_ssh_registers.py --db store_registers.db --dry-run
 """
 gen_ssh_registers.py - generate an SSH config Include file that maps
 register hostnames (NNNNregNN) to their IPs, so they can be reached

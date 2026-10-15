@@ -78,7 +78,7 @@ source "$HOME/.zsh/fzf.zsh"
 source "$HOME/.zsh/bindings.zsh"
 source "$HOME/.zsh/ssh-agent.zsh"
 source "$HOME/.zsh/plugins.zsh"
-[ -f "$HOME/Git/JiraCLI/aliases.sh" ] && source "$HOME/Git/JiraCLI/aliases.sh"
+[ -f "$HOME/tools/jira-toolkit/aliases.sh" ] && source "$HOME/tools/jira-toolkit/aliases.sh"
 
 # ---------- Prompt ----------
 export VIRTUAL_ENV_DISABLE_PROMPT=1

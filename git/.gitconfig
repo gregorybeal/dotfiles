@@ -13,7 +13,7 @@
 
 [core]
     editor = code --wait
-    autocrlf = input
+	autocrlf = input
 
 [color]
     ui = auto

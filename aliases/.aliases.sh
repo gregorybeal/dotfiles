@@ -134,7 +134,12 @@ alias socks-down='tmux kill-session -t sock1080 2>/dev/null; tmux kill-session -
 alias tunnel='killall boring ; boring o -a'
 
 # Tools
-alias hdm='uv run --directory /Users/gbeal/Tools/hdmenu Menu.py'
-alias pos='uv run --directory /Users/gbeal/Tools/hdmenu Menu.py info'
-alias cdid='uv run --project /Users/gbeal/Tools/Analysis /Users/gbeal/Tools/Analysis/loyalty_lookup.py'
-alias idcheck='uv run --directory ~/Git/DB2_Tools db2tool discount_id_lookup --id'
+alias hdm='uv run --directory ~/tools/hdmenu Menu.py'
+alias pos='uv run --directory ~/tools/hdmenu Menu.py info'
+alias cdid='uv run --project ~/tools/receipt-tools ~/tools/receipt-tools/loyalty_lookup.py'
+alias idcheck='uv run --directory ~/tools/db2-tools db2tool discount_id_lookup --id'
+
+# WSL
+alias explorer='/mnt/c/Windows/explorer.exe'
+alias code='"/mnt/c/Users/gbeal/AppData/Local/Programs/Microsoft VS Code/bin/code"'
+alias winget='/mnt/c/Users/gbeal/AppData/Local/Microsoft/WindowsApps/winget.exe'
